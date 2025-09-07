@@ -21,14 +21,25 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore OnlineEventTicketing/OnlineEventTicketing.sln
       
+    - name: Set version from tag
+      run: |
+        if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+        else
+          # Get short commit hash for dev builds
+          SHORT_SHA=$(echo ${GITHUB_SHA} | cut -c1-7)
+          echo "VERSION=1.0.0-dev.$SHORT_SHA" >> $GITHUB_ENV
+        fi
+        
     - name: Build
-      run: dotnet build OnlineEventTicketing/OnlineEventTicketing.sln --no-restore --configuration Release
+      run: dotnet build OnlineEventTicketing/OnlineEventTicketing.sln --no-restore --configuration Release -p:InformationalVersion=${{ env.VERSION }}
       
     - name: Test
       run: dotnet test OnlineEventTicketing/OnlineEventTicketing.sln --no-build --configuration Release --verbosity normal
       
     - name: Publish
-      run: dotnet publish OnlineEventTicketing/OnlineEventTicketing.sln --configuration Release --output ./publish
+      run: dotnet publish OnlineEventTicketing/OnlineEventTicketing.sln --configuration Release --output ./publish -p:InformationalVersion=${{ env.VERSION }}
       
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -43,6 +54,14 @@ jobs:
     environment: production
     
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
     - name: Download build artifacts
       uses: actions/download-artifact@v4
       with:
@@ -54,6 +73,7 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         
+    
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
