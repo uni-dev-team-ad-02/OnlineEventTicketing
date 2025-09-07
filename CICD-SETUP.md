@@ -4,8 +4,7 @@
 This repository now includes a GitHub Actions CI/CD pipeline for the TestCICD ASP.NET MVC application.
 
 ## Workflow Features
-- **Continuous Integration**: Builds and tests on every push/PR
-- **Automatic Deployment**: Deploys to production (tag-based)
+- **Tag-based Deployment**: Builds, tests, and deploys only when version tags are pushed
 - **Artifact Management**: Stores build artifacts for deployment
 
 ## Environment Setup Required
@@ -81,9 +80,9 @@ az webapp config connection-string set --resource-group myResourceGroup --name m
 
 **Note:** The double underscore `__` in `ConnectionStrings__DefaultConnection` tells .NET to override the nested `ConnectionStrings:DefaultConnection` value.
 
-## Branch Strategy
-- `main`: Production deployments
-- Feature branches: CI only (build/test)
+## Deployment Strategy
+- **Tag-based releases**: Push version tags (e.g., `v1.0.0`) to trigger deployment
+- **Example**: `git tag v1.0.0 && git push origin v1.0.0`
 
 ## Manual Steps After Setup
 1. Create production environment
