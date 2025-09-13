@@ -1,0 +1,376 @@
+@model OnlineEventTicketing.Models.ViewModels.OrganizerSalesReportViewModel
+@{
+    ViewData["Title"] = "Sales Report";
+}
+
+<div class="container-fluid fade-in">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="dashboard-title mb-1">Sales Report</h1>
+                    <p class="dashboard-subtitle mb-0">@Model.FormattedReportPeriod</p>
+                </div>
+                <div>
+                    <button class="btn btn-success-custom btn-lg me-2" onclick="exportReport()">
+                        <i class="bi bi-download me-2"></i>Export CSV
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card form-card">
+                <div class="card-body">
+                    <form asp-action="Sales" method="get" class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" name="startDate" value="@ViewBag.StartDate?.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-4">
+                            <label for="endDate" class="form-label">End Date</label>
+                            <input type="date" class="form-control" name="endDate" value="@ViewBag.EndDate?.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary-custom">
+                                <i class="bi bi-funnel-fill me-2"></i>Update Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4 slide-up">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-primary mb-3">
+                        <i class="bi bi-ticket-perforated-fill"></i>
+                    </div>
+                    <h3 class="stat-number text-primary-custom">@Model.TotalTicketsSold</h3>
+                    <p class="stat-label mb-0">Tickets Sold</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-success mb-3">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <h3 class="stat-number text-success-custom">@Model.FormattedTotalRevenue</h3>
+                    <p class="stat-label mb-0">Total Revenue</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-info mb-3">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <h3 class="stat-number text-info-custom">@Model.ActiveTickets</h3>
+                    <p class="stat-label mb-0">Active Tickets</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-warning mb-3">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </div>
+                    <h3 class="stat-number text-warning-custom">@Model.FormattedCancellationRate</h3>
+                    <p class="stat-label mb-0">Cancellation Rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Daily Sales Chart -->
+        @if (Model.DailySales.Any())
+        {
+            <div class="col-lg-8 mb-4">
+                <div class="card analytics-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">Daily Sales Trend</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="salesChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Ticket Status Breakdown -->
+        <div class="col-lg-4 mb-4">
+            <div class="card analytics-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">Ticket Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-bold text-success">Active Tickets</span>
+                            <span class="text-success">@Model.ActiveTickets</span>
+                        </div>
+                        <div class="progress mt-1" style="height: 10px;">
+                            @{
+                                var activePercentage = Model.TotalTicketsSold > 0 ? (double)Model.ActiveTickets / Model.TotalTicketsSold * 100 : 0;
+                            }
+                            <div class="progress-bar bg-success" style="width: @activePercentage%"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-bold text-warning">Cancelled Tickets</span>
+                            <span class="text-warning">@Model.CancelledTickets</span>
+                        </div>
+                        <div class="progress mt-1" style="height: 10px;">
+                            @{
+                                var cancelledPercentage = Model.TotalTicketsSold > 0 ? (double)Model.CancelledTickets / Model.TotalTicketsSold * 100 : 0;
+                            }
+                            <div class="progress-bar bg-warning" style="width: @cancelledPercentage%"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-bold text-danger">Refunded Tickets</span>
+                            <span class="text-danger">@Model.RefundedTickets</span>
+                        </div>
+                        <div class="progress mt-1" style="height: 10px;">
+                            @{
+                                var refundedPercentage = Model.TotalTicketsSold > 0 ? (double)Model.RefundedTickets / Model.TotalTicketsSold * 100 : 0;
+                            }
+                            <div class="progress-bar bg-danger" style="width: @refundedPercentage%"></div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <div class="text-center">
+                        <h4 class="text-primary">@Model.TotalTicketsSold</h4>
+                        <small class="text-muted">Total Tickets Sold</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Peak Sales Days -->
+    @if (Model.PeakSalesDays.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card analytics-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">Peak Sales Days</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var day in Model.PeakSalesDays)
+                            {
+                                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <div class="text-primary fw-bold">@day.FormattedDate</div>
+                                            <div class="h4 text-success">@day.TicketsSold</div>
+                                            <small class="text-muted">tickets sold</small>
+                                            <div class="text-success">@day.FormattedRevenue</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Event Sales Performance -->
+    @if (Model.EventSalesPerformance.Any())
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card events-table-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">Event Sales Performance</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-professional">
+                                    <tr>
+                                        <th>Event</th>
+                                        <th>Date</th>
+                                        <th>Tickets Sold</th>
+                                        <th>Revenue</th>
+                                        <th>Sell-through</th>
+                                        <th>Performance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var eventItem in Model.EventSalesPerformance)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold">@eventItem.EventTitle</div>
+                                            </td>
+                                            <td>@eventItem.FormattedEventDate</td>
+                                            <td>
+                                                <span class="badge bg-primary">@eventItem.TicketsSold / @eventItem.Capacity</span>
+                                            </td>
+                                            <td>
+                                                <span class="fw-bold text-success">@eventItem.FormattedRevenue</span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="me-2">@eventItem.FormattedSellThroughRate</span>
+                                                    <div class="progress flex-grow-1" style="height: 8px; width: 60px;">
+                                                        <div class="progress-bar @(eventItem.SellThroughRate >= 75 ? "bg-success" : eventItem.SellThroughRate >= 50 ? "bg-warning" : "bg-danger")" 
+                                                             style="width: @eventItem.SellThroughRate%"></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge @eventItem.PerformanceBadgeClass">@eventItem.PerformanceRating</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card analytics-card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-graph-down text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="text-muted mt-3">No Sales Data</h4>
+                        <p class="text-muted">No sales data found for the selected period.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Export Form -->
+<form id="exportForm" asp-action="ExportSales" method="post" style="display: none;">
+    <input type="hidden" name="startDate" value="@ViewBag.StartDate?.ToString("yyyy-MM-dd")" />
+    <input type="hidden" name="endDate" value="@ViewBag.EndDate?.ToString("yyyy-MM-dd")" />
+    <input type="hidden" name="format" value="csv" />
+</form>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        function exportReport() {
+            document.getElementById('exportForm').submit();
+        }
+
+        // Sales Chart
+        @if (Model.DailySales.Any())
+        {
+            <text>
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            const salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [@Html.Raw(string.Join(",", Model.DailySales.Select(d => $"'{d.FormattedDate}'")))],
+                    datasets: [
+                        {
+                            label: 'Tickets Sold',
+                            data: [@string.Join(",", Model.DailySales.Select(d => d.TicketsSold))],
+                            borderColor: 'rgb(13, 110, 253)',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            tension: 0.1,
+                            fill: false,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Revenue',
+                            data: [@string.Join(",", Model.DailySales.Select(d => d.Revenue))],
+                            borderColor: 'rgb(25, 135, 84)',
+                            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                            tension: 0.1,
+                            fill: false,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Tickets Sold'
+                            },
+                            beginAtZero: true
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Revenue ($)'
+                            },
+                            beginAtZero: true,
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            </text>
+        }
+    </script>
+}
+

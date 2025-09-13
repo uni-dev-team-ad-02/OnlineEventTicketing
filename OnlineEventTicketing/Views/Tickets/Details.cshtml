@@ -1,0 +1,189 @@
+@model OnlineEventTicketing.Models.ViewModels.TicketDisplayViewModel
+@{
+    ViewData["Title"] = "Ticket Details";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card form-card">
+                <div class="card-header border-0 bg-transparent d-flex justify-content-between align-items-center">
+                    <h3 class="section-title mb-0"><i class="bi bi-ticket-detailed me-2"></i>Ticket Details</h3>
+                    <span class="badge @Model.StatusClass fs-6">@Model.StatusDisplayName</span>
+                </div>
+                <div class="card-body">
+                    <!-- Ticket Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="section-title">Ticket Information</h5>
+                            <dl class="row">
+                                <dt class="col-sm-4">Ticket ID:</dt>
+                                <dd class="col-sm-8">#@Model.Id</dd>
+                                
+                                <dt class="col-sm-4">QR Code:</dt>
+                                <dd class="col-sm-8">
+                                    <code>@Model.QrCode</code>
+                                    <br>
+                                    <a asp-action="QrCode" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary mt-1">
+                                        <i class="bi bi-qr-code me-2"></i>View QR Code
+                                    </a>
+                                </dd>
+                                
+                                <dt class="col-sm-4">Price:</dt>
+                                <dd class="col-sm-8">@Model.FormattedPrice</dd>
+                                
+                                <dt class="col-sm-4">Purchase Date:</dt>
+                                <dd class="col-sm-8">@Model.FormattedPurchaseDate</dd>
+                                
+                                @if (!string.IsNullOrEmpty(Model.SeatNumber))
+                                {
+                                    <dt class="col-sm-4">Seat Number:</dt>
+                                    <dd class="col-sm-8">@Model.SeatNumber</dd>
+                                }
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="section-title">Event Information</h5>
+                            <dl class="row">
+                                <dt class="col-sm-4">Event:</dt>
+                                <dd class="col-sm-8">
+                                    <strong>@Model.EventTitle</strong>
+                                    <br>
+                                    <a asp-controller="Events" asp-action="Details" asp-route-id="@Model.EventId" class="btn btn-sm btn-outline-info mt-1">
+                                        <i class="bi bi-eye me-2"></i>View Event
+                                    </a>
+                                </dd>
+                                
+                                <dt class="col-sm-4">Date & Time:</dt>
+                                <dd class="col-sm-8">@Model.FormattedEventDate</dd>
+                                
+                                <dt class="col-sm-4">Location:</dt>
+                                <dd class="col-sm-8">@Model.EventLocation</dd>
+                                
+                                <dt class="col-sm-4">Category:</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge bg-secondary">@Model.EventCategory</span>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="alert @(Model.Status == OnlineEventTicketing.Data.Entity.TicketStatus.Active ? "alert-success" : 
+                                                Model.Status == OnlineEventTicketing.Data.Entity.TicketStatus.Used ? "alert-info" :
+                                                Model.Status == OnlineEventTicketing.Data.Entity.TicketStatus.Cancelled ? "alert-warning" : "alert-danger")">
+                                <h6><i class="bi bi-info-circle me-2"></i>Ticket Status: @Model.StatusDisplayName</h6>
+                                @switch (Model.Status)
+                                {
+                                    case OnlineEventTicketing.Data.Entity.TicketStatus.Active:
+                                        <p class="mb-0">Your ticket is active and ready to use. Present the QR code at the event entrance.</p>
+                                        break;
+                                    case OnlineEventTicketing.Data.Entity.TicketStatus.Used:
+                                        <p class="mb-0">This ticket has been used for event entry.</p>
+                                        break;
+                                    case OnlineEventTicketing.Data.Entity.TicketStatus.Cancelled:
+                                        <p class="mb-0">This ticket has been cancelled.</p>
+                                        break;
+                                    case OnlineEventTicketing.Data.Entity.TicketStatus.Refunded:
+                                        <p class="mb-0">This ticket has been refunded.</p>
+                                        break;
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <a asp-action="Index" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left me-2"></i>Back to My Tickets
+                                    </a>
+                                </div>
+                                
+                                @if (Model.Status == OnlineEventTicketing.Data.Entity.TicketStatus.Active)
+                                {
+                                    <div class="btn-group">
+                                        <a asp-action="QrCode" asp-route-id="@Model.Id" class="btn btn-success-custom">
+                                            <i class="bi bi-qr-code me-2"></i>Show QR Code
+                                        </a>
+                                        
+                                        @if (Model.CanBeCancelled)
+                                        {
+                                            <button type="button" class="btn btn-warning-custom" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                                                <i class="bi bi-x-circle me-2"></i>Cancel Ticket
+                                            </button>
+                                        }
+                                        
+                                        @if (Model.CanBeRefunded)
+                                        {
+                                            <button type="button" class="btn btn-danger-custom" data-bs-toggle="modal" data-bs-target="#refundModal">
+                                                <i class="bi bi-arrow-left-circle me-2"></i>Request Refund
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Modal -->
+@if (Model.CanBeCancelled)
+{
+    <div class="modal fade" id="cancelModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cancel Ticket</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to cancel this ticket for <strong>@Model.EventTitle</strong>?</p>
+                    <p class="text-warning">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep Ticket</button>
+                    <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" style="display: inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-warning-custom">Cancel Ticket</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Refund Modal -->
+@if (Model.CanBeRefunded)
+{
+    <div class="modal fade" id="refundModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Request Refund</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Request a refund for this ticket to <strong>@Model.EventTitle</strong>?</p>
+                    <p>Refund amount: <strong>@Model.FormattedPrice</strong></p>
+                    <p class="text-info">Refund will be processed to your original payment method within 5-7 business days.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form asp-action="RequestRefund" asp-route-id="@Model.Id" method="post" style="display: inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger-custom">Request Refund</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}

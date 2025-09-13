@@ -1,0 +1,159 @@
+@model OnlineEventTicketing.Models.ViewModels.PurchaseTicketViewModel
+@{
+    ViewData["Title"] = "Purchase Tickets";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card form-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h3 class="section-title mb-0"><i class="bi bi-ticket me-2"></i>Purchase Tickets</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Event Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <h5 class="section-title">@Model.EventTitle</h5>
+                                <p class="mb-1"><i class="bi bi-calendar me-2"></i>@Model.FormattedEventDate</p>
+                                <p class="mb-0"><i class="bi bi-geo-alt me-2"></i>@Model.EventLocation</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form asp-action="Purchase" method="post" id="purchaseForm">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        
+                        <input type="hidden" asp-for="EventId" />
+                        <input type="hidden" asp-for="EventTitle" />
+                        <input type="hidden" asp-for="EventDate" />
+                        <input type="hidden" asp-for="EventLocation" />
+                        <input type="hidden" asp-for="BasePrice" />
+                        <input type="hidden" asp-for="AvailableTickets" />
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="TicketQuantity" class="form-label"></label>
+                                <select asp-for="TicketQuantity" class="form-select" id="ticketQuantity" onchange="updateTotal()">
+                                    @for (int i = 1; i <= Math.Min(10, Model.AvailableTickets); i++)
+                                    {
+                                        <option value="@i" selected="@(Model.TicketQuantity == i)">@i Ticket@(i > 1 ? "s" : "")</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="TicketQuantity" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PaymentMethod" class="form-label"></label>
+                                <select asp-for="PaymentMethod" class="form-select">
+                                    @foreach (var method in Model.PaymentMethods)
+                                    {
+                                        <option value="@method" selected="@(Model.PaymentMethod == method)">
+                                            @method.Replace("Card", " Card")
+                                        </option>
+                                    }
+                                </select>
+                                <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label asp-for="PromotionCode" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="PromotionCode" class="form-control" placeholder="Enter promotion code (optional)" id="promotionCode">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="checkPromotion()">Apply</button>
+                                </div>
+                                <span asp-validation-for="PromotionCode" class="text-danger"></span>
+                                <div id="promotionMessage"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Order Summary -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card analytics-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title section-title">Order Summary</h5>
+                                        <div class="row">
+                                            <div class="col-md-8">
+                                                <p class="mb-1">Base Price per Ticket:</p>
+                                                <p class="mb-1">Quantity:</p>
+                                                <p class="mb-1">Subtotal:</p>
+                                                @if (Model.Discount > 0)
+                                                {
+                                                    <p class="mb-1 text-success">Discount:</p>
+                                                }
+                                                <hr>
+                                                <h5>Total:</h5>
+                                            </div>
+                                            <div class="col-md-4 text-end">
+                                                <p class="mb-1" id="basePrice">@Model.FormattedBasePrice</p>
+                                                <p class="mb-1" id="quantity">@Model.TicketQuantity</p>
+                                                <p class="mb-1" id="subtotal">@((Model.BasePrice * Model.TicketQuantity).ToString("C"))</p>
+                                                @if (Model.Discount > 0)
+                                                {
+                                                    <p class="mb-1 text-success" id="discount">-@Model.FormattedDiscount</p>
+                                                }
+                                                <hr>
+                                                <h5 id="total">@((Model.BasePrice * Model.TicketQuantity - Model.Discount).ToString("C"))</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                @if (Model.AvailableTickets > 0)
+                                {
+                                    <button type="submit" class="btn btn-success-custom btn-lg">
+                                        <i class="bi bi-credit-card me-2"></i>Complete Purchase
+                                    </button>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>Sorry, this event is sold out!
+                                    </div>
+                                }
+                                <a asp-controller="Events" asp-action="Details" asp-route-id="@Model.EventId" class="btn btn-outline-secondary ms-2">
+                                    <i class="bi bi-arrow-left me-2"></i>Back to Event
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        function updateTotal() {
+            const quantity = document.getElementById('ticketQuantity').value;
+            const basePrice = @Model.BasePrice;
+            const subtotal = basePrice * quantity;
+            
+            document.getElementById('quantity').textContent = quantity;
+            document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
+            document.getElementById('total').textContent = '$' + subtotal.toFixed(2);
+        }
+        
+        function checkPromotion() {
+            const promoCode = document.getElementById('promotionCode').value;
+            const messageDiv = document.getElementById('promotionMessage');
+            
+            if (promoCode) {
+                // In a real application, this would make an AJAX call to validate the promotion
+                messageDiv.innerHTML = '<small class="text-info">Promotion code will be validated on purchase.</small>';
+            } else {
+                messageDiv.innerHTML = '';
+            }
+        }
+    </script>
+}

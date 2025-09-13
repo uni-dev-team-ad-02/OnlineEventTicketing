@@ -1,0 +1,115 @@
+@model OnlineEventTicketing.Models.ViewModels.EventDisplayViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+            {
+                <img src="@Model.ImageUrl" class="img-fluid rounded mb-3" alt="@Model.Title">
+            }
+            
+            <h1 class="dashboard-title mb-1">@Model.Title</h1>
+            <p class="dashboard-subtitle mb-3">By @Model.OrganizerName</p>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p><strong><i class="bi bi-calendar me-2"></i>Date & Time:</strong><br>@Model.FormattedDate</p>
+                    <p><strong><i class="bi bi-geo-alt me-2"></i>Location:</strong><br>@Model.Location</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong><i class="bi bi-tag me-2"></i>Category:</strong><br>@Model.Category</p>
+                    <p><strong><i class="bi bi-people me-2"></i>Capacity:</strong><br>@Model.Capacity people</p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h4>About This Event</h4>
+                <p class="text-justify">@Model.Description</p>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card form-card">
+                <div class="card-body">
+                    <h5 class="card-title section-title mb-3">Event Information</h5>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Price:</span>
+                            <span class="h5 text-primary">@Model.FormattedPrice</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Available Tickets:</span>
+                            <span class="badge @(Model.HasAvailableTickets ? "bg-success" : "bg-danger")">
+                                @Model.AvailableTickets
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Status:</span>
+                            <span class="badge @(Model.IsUpcoming ? "bg-info" : "bg-secondary")">
+                                @(Model.IsUpcoming ? "Upcoming" : "Past Event")
+                            </span>
+                        </div>
+                    </div>
+                    
+                    @if (Model.IsUpcoming && Model.HasAvailableTickets && User.Identity.IsAuthenticated)
+                    {
+                        <a asp-controller="Tickets" asp-action="Purchase" asp-route-id="@Model.Id" class="btn btn-success-custom w-100 mb-2">
+                            <i class="bi bi-ticket me-2"></i>Buy Tickets Now
+                        </a>
+                    }
+                    else if (!User.Identity.IsAuthenticated)
+                    {
+                        <p class="text-muted small">Please <a asp-area="Identity" asp-page="/Account/Login">login</a> to purchase tickets.</p>
+                    }
+                    else if (!Model.HasAvailableTickets)
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Sold Out
+                        </div>
+                    }
+                    else if (!Model.IsUpcoming)
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>This event has already ended
+                        </div>
+                    }
+                    
+                    <a asp-action="Index" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Events
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    @if (User.Identity.IsAuthenticated && ViewBag.IsOrganizer == true)
+    {
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card form-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">Event Management</h5>
+                    </div>
+                    <div class="card-body">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary-custom me-2">
+                            <i class="bi bi-pencil me-2"></i>Edit Event
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger-custom">
+                            <i class="bi bi-trash me-2"></i>Delete Event
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,62 @@
+@{
+    ViewData["Title"] = "Ticket QR Code";
+    var qrCode = ViewBag.QrCode as string;
+    var eventTitle = ViewBag.EventTitle as string;
+    var eventDate = ViewBag.EventDate as string;
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card text-center">
+                <div class="card-header">
+                    <h3><i class="bi bi-qr-code"></i> Your Ticket</h3>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">@eventTitle</h5>
+                    <p class="card-text text-muted">@eventDate</p>
+                    
+                    <div class="my-4">
+                        <!-- QR Code placeholder - In a real app, you would generate an actual QR code image -->
+                        <div class="border border-2 border-dark mx-auto d-flex align-items-center justify-content-center" 
+                             style="width: 200px; height: 200px; background-color: #f8f9fa;">
+                            <div class="text-center">
+                                <i class="bi bi-qr-code" style="font-size: 4rem; color: #000;"></i>
+                                <br>
+                                <small class="text-muted">QR Code</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>QR Code:</strong> @qrCode<br>
+                            Show this QR code at the event entrance for admission.
+                        </small>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button onclick="window.print()" class="btn btn-primary me-2">
+                            <i class="bi bi-printer"></i> Print Ticket
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to My Tickets
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @@media print {
+        .btn, .navbar, .footer {
+            display: none !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    }
+</style>

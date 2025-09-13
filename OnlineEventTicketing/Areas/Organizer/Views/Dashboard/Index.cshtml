@@ -1,0 +1,181 @@
+@{
+    ViewData["Title"] = "Organizer Dashboard";
+}
+
+<div class="container-fluid fade-in">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="dashboard-title mb-1">Organizer Dashboard</h1>
+                    <p class="dashboard-subtitle mb-0">Manage your events and track performance with powerful insights</p>
+                </div>
+                <a asp-area="" asp-controller="Events" asp-action="Create" class="btn btn-primary-custom btn-lg">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Create New Event
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-5 slide-up">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-primary mb-3">
+                        <i class="bi bi-calendar-event-fill"></i>
+                    </div>
+                    <h3 class="stat-number text-primary-custom">@ViewBag.TotalEvents</h3>
+                    <p class="stat-label mb-0">Total Events</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-success mb-3">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <h3 class="stat-number text-success-custom">@ViewBag.ActiveEvents</h3>
+                    <p class="stat-label mb-0">Active Events</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-info mb-3">
+                        <i class="bi bi-ticket-perforated-fill"></i>
+                    </div>
+                    <h3 class="stat-number text-info-custom">@ViewBag.TotalTicketsSold</h3>
+                    <p class="stat-label mb-0">Tickets Sold</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-warning mb-3">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <h3 class="stat-number text-warning-custom">@(ViewBag.TotalRevenue?.ToString("C") ?? "$0.00")</h3>
+                    <p class="stat-label mb-0">Total Revenue</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card admin-actions-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a asp-area="" asp-controller="Events" asp-action="Create" class="btn btn-primary-custom btn-lg w-100">
+                                <i class="bi bi-plus-circle-fill d-block mb-2" style="font-size: 2.5rem;"></i>
+                                Create Event
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a asp-area="" asp-controller="Events" asp-action="MyEvents" class="btn btn-success-custom btn-lg w-100">
+                                <i class="bi bi-calendar-week-fill d-block mb-2" style="font-size: 2.5rem;"></i>
+                                Manage Events
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a asp-area="Organizer" asp-controller="Promotions" asp-action="Index" class="btn btn-warning-custom btn-lg w-100">
+                                <i class="bi bi-tags-fill d-block mb-2" style="font-size: 2.5rem;"></i>
+                                Promotions
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a asp-area="Organizer" asp-controller="Reports" asp-action="Index" class="btn btn-info-custom btn-lg w-100">
+                                <i class="bi bi-graph-up-arrow d-block mb-2" style="font-size: 2.5rem;"></i>
+                                View Reports
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Events and Upcoming Events -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card analytics-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">Recent Events</h5>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.RecentEvents != null)
+                    {
+                        <div class="list-group">
+                            @foreach (var eventItem in ViewBag.RecentEvents)
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">@eventItem.Title</h6>
+                                        <small class="text-muted">@eventItem.Date.ToString("MMM dd, yyyy")</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge @(eventItem.IsActive ? "bg-success" : "bg-secondary")">
+                                            @(eventItem.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">@eventItem.AvailableTickets/@eventItem.Capacity tickets</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No events created yet.</p>
+                        <a asp-area="" asp-controller="Events" asp-action="Create" class="btn btn-primary-custom">
+                            <i class="bi bi-plus-circle me-2"></i>Create Your First Event
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card analytics-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">Upcoming Events</h5>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.UpcomingEvents != null)
+                    {
+                        <div class="list-group">
+                            @foreach (var eventItem in ViewBag.UpcomingEvents)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">@eventItem.Title</h6>
+                                        <small class="text-primary">@eventItem.Date.ToString("MMM dd")</small>
+                                    </div>
+                                    <p class="mb-1">@eventItem.Location</p>
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">@eventItem.AvailableTickets tickets available</small>
+                                        <a asp-area="" asp-controller="Events" asp-action="Details" asp-route-id="@eventItem.Id" class="btn btn-sm btn-outline-primary">View</a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No upcoming events.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

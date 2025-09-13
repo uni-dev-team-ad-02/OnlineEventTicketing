@@ -1,0 +1,245 @@
+@model IEnumerable<OnlineEventTicketing.Models.ViewModels.EventDisplayViewModel>
+@{
+    ViewData["Title"] = "Event Management";
+}
+
+<div class="container-fluid fade-in">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="dashboard-title mb-1">
+                        Event Management
+                    </h1>
+                    <p class="dashboard-subtitle mb-0">Manage all system events and monitor performance</p>
+                </div>
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn btn-primary-custom btn-lg">
+                    <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <div class="alert alert-info">
+                    <h4>No Events in System</h4>
+                    <p>There are currently no events in the system.</p>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card events-table-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">System Events Overview (@Model.Count() total)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-professional">
+                                    <tr>
+                                        <th>Event</th>
+                                        <th>Organizer</th>
+                                        <th>Date</th>
+                                        <th>Category</th>
+                                        <th>Price</th>
+                                        <th>Tickets</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var eventItem in Model)
+                                    {
+                                        <tr class="@(!eventItem.IsActive ? "table-secondary" : "")">
+                                            <td>
+                                                <div>
+                                                    <strong>@eventItem.Title</strong>
+                                                    <br>
+                                                    <small class="text-muted">@eventItem.Location</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@eventItem.OrganizerName</span>
+                                            </td>
+                                            <td>
+                                                <small>@eventItem.FormattedDate</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@eventItem.Category</span>
+                                            </td>
+                                            <td>@eventItem.FormattedPrice</td>
+                                            <td>
+                                                <div class="progress" style="width: 100px; height: 20px;">
+                                                    <div class="progress-bar @(eventItem.AvailableTickets == 0 ? "bg-danger" : eventItem.AvailableTickets < (eventItem.Capacity * 0.2) ? "bg-warning" : "bg-success")" 
+                                                         style="width: @((double)(eventItem.Capacity - eventItem.AvailableTickets) / eventItem.Capacity * 100)%">
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted">@(eventItem.Capacity - eventItem.AvailableTickets)/@eventItem.Capacity sold</small>
+                                            </td>
+                                            <td>
+                                                @if (eventItem.IsUpcoming)
+                                                {
+                                                    <span class="badge bg-primary">Upcoming</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Past</span>
+                                                }
+                                                <br>
+                                                @if (eventItem.IsActive)
+                                                {
+                                                    <span class="badge bg-success">Active</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger">Inactive</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group-vertical btn-group-sm">
+                                                    <a asp-area="" asp-controller="Events" asp-action="Details" asp-route-id="@eventItem.Id" class="btn btn-outline-info btn-sm" title="View Details">
+                                                        <i class="bi bi-eye"></i> View
+                                                    </a>
+                                                    
+                                                    <form asp-action="ToggleStatus" asp-route-id="@eventItem.Id" method="post" style="display: inline;">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-outline-@(eventItem.IsActive ? "warning" : "success") btn-sm" title="@(eventItem.IsActive ? "Deactivate" : "Activate")">
+                                                            <i class="bi bi-@(eventItem.IsActive ? "pause" : "play")"></i> @(eventItem.IsActive ? "Deactivate" : "Activate")
+                                                        </button>
+                                                    </form>
+                                                    
+                                                    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal-@eventItem.Id" title="Delete Event">
+                                                        <i class="bi bi-trash"></i> Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Statistics -->
+        <div class="row mt-4 slide-up">
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="card stat-card stat-card-primary">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-primary mb-3">
+                            <i class="bi bi-calendar-event"></i>
+                        </div>
+                        <h3 class="stat-number text-primary-custom">@Model.Count()</h3>
+                        <p class="stat-label mb-0">Total Events</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="card stat-card stat-card-success">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-success mb-3">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h3 class="stat-number text-success-custom">@Model.Count(e => e.IsActive)</h3>
+                        <p class="stat-label mb-0">Active Events</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="card stat-card stat-card-info">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-info mb-3">
+                            <i class="bi bi-calendar-plus"></i>
+                        </div>
+                        <h3 class="stat-number text-info-custom">@Model.Count(e => e.IsUpcoming)</h3>
+                        <p class="stat-label mb-0">Upcoming Events</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="card stat-card stat-card-warning">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-warning mb-3">
+                            <i class="bi bi-ticket-perforated"></i>
+                        </div>
+                        <h3 class="stat-number text-warning-custom">@Model.Sum(e => e.Capacity - e.AvailableTickets)</h3>
+                        <p class="stat-label mb-0">Tickets Sold</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="card stat-card stat-card-pending">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-pending mb-3">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h3 class="stat-number text-pending-custom">@Model.Sum(e => e.Capacity)</h3>
+                        <p class="stat-label mb-0">Total Capacity</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="card stat-card stat-card-success">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-success mb-3">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <h3 class="stat-number text-success-custom">@Model.Sum(e => (e.Capacity - e.AvailableTickets) * e.BasePrice).ToString("C")</h3>
+                        <p class="stat-label mb-0">Total Revenue</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Delete Confirmation Modals -->
+@foreach (var eventItem in Model)
+{
+    <div class="modal fade" id="deleteModal-@eventItem.Id" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Delete Event</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Warning:</strong> This action cannot be undone!
+                    </div>
+                    <p>Are you sure you want to permanently delete the event:</p>
+                    <p class="fw-bold">"@eventItem.Title"</p>
+                    @if (eventItem.Capacity - eventItem.AvailableTickets > 0)
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            This event has @(eventItem.Capacity - eventItem.AvailableTickets) sold tickets. 
+                            Deleting will affect existing customers.
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form asp-action="Delete" asp-route-id="@eventItem.Id" method="post" style="display: inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Delete Permanently
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+

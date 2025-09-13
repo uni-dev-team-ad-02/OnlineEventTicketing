@@ -1,0 +1,154 @@
+@model IEnumerable<OnlineEventTicketing.Models.ViewModels.EventDisplayViewModel>
+@{
+    ViewData["Title"] = "My Events";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-calendar-week"></i> My Events</h2>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Create New Event
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <div class="alert alert-info">
+                    <h4>No Events Created Yet</h4>
+                    <p>You haven't created any events yet. Start by creating your first event!</p>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Create Your First Event
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Date</th>
+                                <th>Location</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Tickets Available</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var eventItem in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div>
+                                            <strong>@eventItem.Title</strong>
+                                            @if (!string.IsNullOrEmpty(eventItem.Description) && eventItem.Description.Length > 50)
+                                            {
+                                                <br><small class="text-muted">@(eventItem.Description.Substring(0, 50))...</small>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <small>@eventItem.FormattedDate</small>
+                                    </td>
+                                    <td>@eventItem.Location</td>
+                                    <td>
+                                        <span class="badge bg-secondary">@eventItem.Category</span>
+                                    </td>
+                                    <td>@eventItem.FormattedPrice</td>
+                                    <td>
+                                        <span class="badge @(eventItem.HasAvailableTickets ? "bg-success" : "bg-danger")">
+                                            @eventItem.AvailableTickets / @eventItem.Capacity
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (eventItem.IsUpcoming)
+                                        {
+                                            <span class="badge bg-info">Upcoming</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Past</span>
+                                        }
+                                        
+                                        @if (eventItem.IsActive)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">Inactive</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Details" asp-route-id="@eventItem.Id" class="btn btn-sm btn-outline-primary" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@eventItem.Id" class="btn btn-sm btn-outline-warning" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@eventItem.Id" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-bar-chart"></i> Event Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="mb-2">
+                                    <h4 class="text-primary">@Model.Count()</h4>
+                                    <small class="text-muted">Total Events</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-2">
+                                    <h4 class="text-success">@Model.Count(e => e.IsUpcoming)</h4>
+                                    <small class="text-muted">Upcoming Events</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-2">
+                                    <h4 class="text-info">@Model.Count(e => e.IsActive)</h4>
+                                    <small class="text-muted">Active Events</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-2">
+                                    <h4 class="text-warning">@Model.Sum(e => e.Capacity - e.AvailableTickets)</h4>
+                                    <small class="text-muted">Tickets Sold</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
