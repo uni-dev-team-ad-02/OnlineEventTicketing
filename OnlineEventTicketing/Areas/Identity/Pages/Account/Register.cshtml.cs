@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using OnlineEventTicketing.Data.Entity;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace OnlineEventTicketing.Areas.Identity.Pages.Account
 {
@@ -30,13 +31,15 @@ namespace OnlineEventTicketing.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
             IUserStore<ApplicationUser> userStore,
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -44,6 +47,7 @@ namespace OnlineEventTicketing.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _roleManager = roleManager;
         }
 
         /// <summary>
@@ -66,38 +70,45 @@ namespace OnlineEventTicketing.Areas.Identity.Pages.Account
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
         /// <summary>
+        ///     Available roles for registration
+        /// </summary>
+        public List<SelectListItem> AvailableRoles { get; set; } = new List<SelectListItem>();
+
+        /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         public class InputModel
         {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
+            [Required]
+            [StringLength(50)]
+            [Display(Name = "First Name")]
+            public string FirstName { get; set; }
+
+            [Required]
+            [StringLength(50)]
+            [Display(Name = "Last Name")]
+            public string LastName { get; set; }
+
             [Required]
             [EmailAddress]
             [Display(Name = "Email")]
             public string Email { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [Required]
             [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
             [DataType(DataType.Password)]
             [Display(Name = "Password")]
             public string Password { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [DataType(DataType.Password)]
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+
+            [Required]
+            [Display(Name = "Account Type")]
+            public string SelectedRole { get; set; }
         }
 
 
@@ -105,15 +116,34 @@ namespace OnlineEventTicketing.Areas.Identity.Pages.Account
         {
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+            // Load available roles (excluding Admin for public registration)
+            AvailableRoles = new List<SelectListItem>
+            {
+                new SelectListItem { Value = "Customer", Text = "Customer - Buy tickets and attend events", Selected = true },
+                new SelectListItem { Value = "EventOrganizer", Text = "Event Organizer - Create and manage events" }
+            };
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+            // Reload available roles in case of validation errors
+            AvailableRoles = new List<SelectListItem>
+            {
+                new SelectListItem { Value = "Customer", Text = "Customer - Buy tickets and attend events" },
+                new SelectListItem { Value = "EventOrganizer", Text = "Event Organizer - Create and manage events" }
+            };
+
             if (ModelState.IsValid)
             {
                 var user = CreateUser();
+
+                // Set additional user properties
+                user.FirstName = Input.FirstName;
+                user.LastName = Input.LastName;
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
@@ -121,7 +151,19 @@ namespace OnlineEventTicketing.Areas.Identity.Pages.Account
 
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("User created a new account with password.");
+                    // Assign the selected role to the user
+                    if (!string.IsNullOrEmpty(Input.SelectedRole) &&
+                        (Input.SelectedRole == "Customer" || Input.SelectedRole == "EventOrganizer"))
+                    {
+                        await _userManager.AddToRoleAsync(user, Input.SelectedRole);
+                    }
+                    else
+                    {
+                        // Default to Customer role if no valid role selected
+                        await _userManager.AddToRoleAsync(user, "Customer");
+                    }
+
+                    _logger.LogInformation("User created a new account with password and role: {Role}.", Input.SelectedRole ?? "Customer");
 
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
