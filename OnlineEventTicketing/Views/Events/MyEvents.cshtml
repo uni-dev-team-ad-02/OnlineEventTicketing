@@ -3,13 +3,17 @@
     ViewData["Title"] = "My Events";
 }
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2><i class="bi bi-calendar-week"></i> My Events</h2>
-                <a asp-action="Create" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> Create New Event
+<div class="container-fluid fade-in">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="dashboard-title mb-1">My Events</h1>
+                    <p class="dashboard-subtitle mb-0">Create and manage your events</p>
+                </div>
+                <a asp-action="Create" class="btn btn-primary-custom btn-lg">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Create New Event
                 </a>
             </div>
         </div>
@@ -18,36 +22,95 @@
     @if (!Model.Any())
     {
         <div class="row">
-            <div class="col-md-12 text-center">
-                <div class="alert alert-info">
-                    <h4>No Events Created Yet</h4>
-                    <p>You haven't created any events yet. Start by creating your first event!</p>
-                    <a asp-action="Create" class="btn btn-primary">
-                        <i class="bi bi-plus-circle"></i> Create Your First Event
-                    </a>
+            <div class="col-12">
+                <div class="card events-table-card">
+                    <div class="card-body">
+                        <div class="text-center py-5">
+                            <i class="bi bi-calendar-week text-muted" style="font-size: 4rem;"></i>
+                            <h4 class="text-muted mt-3">No events created yet</h4>
+                            <p class="text-muted">Create your first event to start selling tickets and managing attendees.</p>
+                            <a asp-action="Create" class="btn btn-primary-custom btn-lg">
+                                <i class="bi bi-plus-circle-fill me-2"></i>Create Your First Event
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     }
     else
     {
+        <!-- Events Summary -->
+        <div class="row mb-4 slide-up">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-primary mb-3">
+                            <i class="bi bi-calendar-week-fill"></i>
+                        </div>
+                        <h3 class="stat-number text-primary-custom">@Model.Count()</h3>
+                        <p class="stat-label mb-0">Total Events</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-success mb-3">
+                            <i class="bi bi-calendar-check-fill"></i>
+                        </div>
+                        <h3 class="stat-number text-success-custom">@Model.Count(e => e.IsUpcoming)</h3>
+                        <p class="stat-label mb-0">Upcoming</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-info mb-3">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h3 class="stat-number text-info-custom">@Model.Count(e => e.IsActive)</h3>
+                        <p class="stat-label mb-0">Active</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-warning mb-3">
+                            <i class="bi bi-ticket-perforated-fill"></i>
+                        </div>
+                        <h3 class="stat-number text-warning-custom">@Model.Sum(e => e.Capacity - e.AvailableTickets)</h3>
+                        <p class="stat-label mb-0">Tickets Sold</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events List -->
         <div class="row">
-            <div class="col-md-12">
-                <div class="table-responsive">
-                    <table class="table table-professional table-striped">
-                        <thead>
-                            <tr>
-                                <th>Event</th>
-                                <th>Date</th>
-                                <th>Location</th>
-                                <th>Category</th>
-                                <th>Price</th>
-                                <th>Tickets Available</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+            <div class="col-12">
+                <div class="card events-table-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">All Events</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-professional">
+                                    <tr>
+                                        <th>Event</th>
+                                        <th>Date</th>
+                                        <th>Location</th>
+                                        <th>Category</th>
+                                        <th>Price</th>
+                                        <th>Tickets Available</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                             @foreach (var eventItem in Model)
                             {
                                 <tr>
@@ -107,44 +170,8 @@
                                     </td>
                                 </tr>
                             }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="bi bi-bar-chart"></i> Event Summary</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-md-3">
-                                <div class="mb-2">
-                                    <h4 class="text-primary">@Model.Count()</h4>
-                                    <small class="text-muted">Total Events</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="mb-2">
-                                    <h4 class="text-success">@Model.Count(e => e.IsUpcoming)</h4>
-                                    <small class="text-muted">Upcoming Events</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="mb-2">
-                                    <h4 class="text-info">@Model.Count(e => e.IsActive)</h4>
-                                    <small class="text-muted">Active Events</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="mb-2">
-                                    <h4 class="text-warning">@Model.Sum(e => e.Capacity - e.AvailableTickets)</h4>
-                                    <small class="text-muted">Tickets Sold</small>
-                                </div>
-                            </div>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
