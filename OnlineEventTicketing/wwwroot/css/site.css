@@ -358,13 +358,7 @@ main {
   overflow: hidden;
 }
 
-.table thead th {
-  background: var(--primary-gradient);
-  color: white;
-  border: none;
-  font-weight: 600;
-  padding: 1rem;
-}
+/* Removed - using centralized table-professional styling from common.css */
 
 .table tbody td {
   padding: 1rem;
