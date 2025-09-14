@@ -1,64 +1,149 @@
 ﻿@page
 @model RegisterModel
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Create Account";
 }
 
-<h1>@ViewData["Title"]</h1>
+<div class="container-fluid fade-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <!-- Header -->
+            <div class="row mb-5">
+                <div class="col-12 text-center">
+                    <h1 class="dashboard-title mb-2">
+                        <i class="bi bi-person-plus-fill me-3"></i>Create Your Account
+                    </h1>
+                    <p class="dashboard-subtitle">Join our platform to start creating and managing events</p>
+                </div>
+            </div>
 
-<div class="row">
-    <div class="col-md-4">
-        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <h2>Create a new account.</h2>
-            <hr />
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                <label asp-for="Input.Email">Email</label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
-            </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.Password">Password</label>
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
-            </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.ConfirmPassword">Confirm Password</label>
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
-            </div>
-            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </form>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to register.</h3>
-            <hr />
-            @{
-                if ((Model.ExternalLogins?.Count ?? 0) == 0)
-                {
-                    <div>
-                        <p>
-                            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-                            about setting up this ASP.NET application to support logging in via external services</a>.
-                        </p>
-                    </div>
-                }
-                else
-                {
-                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
-                        <div>
-                            <p>
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                                }
-                            </p>
+            <div class="row">
+                <!-- Registration Form -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card form-card">
+                        <div class="card-header border-0 bg-transparent">
+                            <h5 class="section-title mb-0">
+                                <i class="bi bi-envelope-fill me-2"></i>Register with Email
+                            </h5>
                         </div>
-                    </form>
-                }
-            }
-        </section>
+                        <div class="card-body">
+                            <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                                <div class="mb-4">
+                                    <label asp-for="Input.Email" class="form-label fw-bold">
+                                        <i class="bi bi-envelope me-2 text-primary"></i>Email Address
+                                    </label>
+                                    <input asp-for="Input.Email" class="form-control form-control-lg" autocomplete="username" aria-required="true" placeholder="Enter your email address" />
+                                    <span asp-validation-for="Input.Email" class="text-danger mt-1 d-block"></span>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label asp-for="Input.Password" class="form-label fw-bold">
+                                        <i class="bi bi-lock me-2 text-primary"></i>Password
+                                    </label>
+                                    <input asp-for="Input.Password" class="form-control form-control-lg" autocomplete="new-password" aria-required="true" placeholder="Create a secure password" />
+                                    <span asp-validation-for="Input.Password" class="text-danger mt-1 d-block"></span>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label asp-for="Input.ConfirmPassword" class="form-label fw-bold">
+                                        <i class="bi bi-lock-fill me-2 text-primary"></i>Confirm Password
+                                    </label>
+                                    <input asp-for="Input.ConfirmPassword" class="form-control form-control-lg" autocomplete="new-password" aria-required="true" placeholder="Confirm your password" />
+                                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger mt-1 d-block"></span>
+                                </div>
+
+                                <button id="registerSubmit" type="submit" class="btn btn-primary-custom btn-lg w-100 mb-3">
+                                    <i class="bi bi-person-check-fill me-2"></i>Create Account
+                                </button>
+
+                                <div class="text-center">
+                                    <p class="text-muted mb-0">
+                                        Already have an account?
+                                        <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="text-primary-custom fw-bold text-decoration-none">
+                                            Sign in here
+                                        </a>
+                                    </p>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Benefits & Info -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card analytics-card h-100">
+                        <div class="card-header border-0 bg-transparent">
+                            <h5 class="section-title mb-0">
+                                <i class="bi bi-star-fill me-2"></i>Why Join Us?
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-3">
+                                <div class="d-flex align-items-start">
+                                    <div class="stat-icon stat-icon-primary me-3 mt-1">
+                                        <i class="bi bi-calendar-event-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Create Events</h6>
+                                        <p class="text-muted mb-0 small">Set up and manage your own events with our easy-to-use platform.</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-start">
+                                    <div class="stat-icon stat-icon-success me-3 mt-1">
+                                        <i class="bi bi-ticket-perforated-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Sell Tickets</h6>
+                                        <p class="text-muted mb-0 small">Manage ticket sales and track attendance seamlessly.</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-start">
+                                    <div class="stat-icon stat-icon-info me-3 mt-1">
+                                        <i class="bi bi-graph-up-arrow"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Analytics & Insights</h6>
+                                        <p class="text-muted mb-0 small">Get detailed analytics about your events and attendees.</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-start">
+                                    <div class="stat-icon stat-icon-warning me-3 mt-1">
+                                        <i class="bi bi-tags-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Promotional Tools</h6>
+                                        <p class="text-muted mb-0 small">Create discount codes and promotional campaigns.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if ((Model.ExternalLogins?.Count ?? 0) > 0)
+                            {
+                                <hr class="my-4">
+                                <div class="text-center">
+                                    <h6 class="text-muted mb-3">Or register with</h6>
+                                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                                        <div class="d-grid gap-2">
+                                            @foreach (var provider in Model.ExternalLogins!)
+                                            {
+                                                <button type="submit" class="btn btn-outline-secondary" name="provider" value="@provider.Name" title="Register using your @provider.DisplayName account">
+                                                    <i class="bi bi-@provider.Name.ToLower()"></i> @provider.DisplayName
+                                                </button>
+                                            }
+                                        </div>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
