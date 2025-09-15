@@ -119,13 +119,18 @@ namespace OnlineEventTicketing.Controllers
 
             try
             {
+                var amountInDollars = (decimal)(session.AmountTotal ?? 0) / 100;
+
+                _logger.LogInformation("Searching for pending payment - Customer: {CustomerId}, Amount: ${Amount}, PaymentIntent: {PaymentIntent}",
+                    customerId, amountInDollars, session.PaymentIntentId);
+
                 // Find pending payment by customer and amount
-                var payment = await _paymentService.GetPendingPaymentByCustomerAndAmountAsync(
-                    customerId,
-                    (decimal)(session.AmountTotal ?? 0) / 100);
+                var payment = await _paymentService.GetPendingPaymentByCustomerAndAmountAsync(customerId, amountInDollars);
 
                 if (payment != null)
                 {
+                    _logger.LogInformation("Found pending payment {PaymentId} for customer {CustomerId}", payment.Id, customerId);
+
                     await _paymentService.UpdatePaymentStatusAsync(payment.Id, Data.Entity.PaymentStatus.Completed);
                     payment.StripePaymentIntentId = session.PaymentIntentId;
                     await _paymentService.UpdatePaymentAsync(payment);
@@ -135,8 +140,36 @@ namespace OnlineEventTicketing.Controllers
                 }
                 else
                 {
-                    _logger.LogWarning("No pending payment found for customer {CustomerId} with amount {Amount}",
-                        customerId, (decimal)(session.AmountTotal ?? 0) / 100);
+                    _logger.LogWarning("No pending payment found for customer {CustomerId} with amount ${Amount}",
+                        customerId, amountInDollars);
+
+                    // Try to find any pending payments for this customer for debugging
+                    var allCustomerPayments = await _paymentService.GetPaymentsByCustomerIdAsync(customerId);
+                    var pendingPayments = allCustomerPayments.Where(p => p.Status == Data.Entity.PaymentStatus.Pending).ToList();
+
+                    _logger.LogInformation("Customer {CustomerId} has {PendingCount} pending payments total",
+                        customerId, pendingPayments.Count);
+
+                    foreach (var pendingPayment in pendingPayments)
+                    {
+                        _logger.LogInformation("Pending payment {PaymentId}: Amount=${Amount}, Created={Created}",
+                            pendingPayment.Id, pendingPayment.Amount, pendingPayment.CreatedAt);
+                    }
+
+                    // Fallback: try to update the most recent pending payment for this customer
+                    var mostRecentPending = pendingPayments.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
+                    if (mostRecentPending != null)
+                    {
+                        _logger.LogInformation("Fallback: Using most recent pending payment {PaymentId} for customer {CustomerId}",
+                            mostRecentPending.Id, customerId);
+
+                        await _paymentService.UpdatePaymentStatusAsync(mostRecentPending.Id, Data.Entity.PaymentStatus.Completed);
+                        mostRecentPending.StripePaymentIntentId = session.PaymentIntentId;
+                        await _paymentService.UpdatePaymentAsync(mostRecentPending);
+
+                        _logger.LogInformation("Fallback payment {PaymentId} marked as completed for session: {SessionId}",
+                            mostRecentPending.Id, session.Id);
+                    }
                 }
             }
             catch (Exception e)
