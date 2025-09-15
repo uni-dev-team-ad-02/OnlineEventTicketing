@@ -8,12 +8,14 @@ namespace OnlineEventTicketing.Business
     {
         private readonly RefundService _refundService;
         private readonly SessionService _sessionService;
+        private readonly ILogger<StripeService> _logger;
 
-        public StripeService(IConfiguration configuration)
+        public StripeService(IConfiguration configuration, ILogger<StripeService> logger)
         {
             StripeConfiguration.ApiKey = configuration["Stripe:SecretKey"];
             _refundService = new RefundService();
             _sessionService = new SessionService();
+            _logger = logger;
         }
 
         public async Task<string?> CreateCheckoutSessionAsync(decimal amount, string customerId, string description, string successUrl, string cancelUrl)
@@ -82,11 +84,16 @@ namespace OnlineEventTicketing.Business
         {
             try
             {
-                var stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, endpointSecret);
+                var stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, endpointSecret, throwOnApiVersionMismatch: false);
+
+                _logger.LogInformation("Successfully processed Stripe webhook - Event: {EventType}, API Version: {ApiVersion}",
+                    stripeEvent.Type, stripeEvent.ApiVersion);
+
                 return await Task.FromResult(stripeEvent);
             }
             catch (StripeException ex)
             {
+                _logger.LogError(ex, "Webhook signature verification failed");
                 throw new StripeException($"Webhook signature verification failed: {ex.Message}");
             }
         }
