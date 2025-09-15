@@ -5,34 +5,63 @@
 
 <!-- Hero Section -->
 <div class="hero-section">
-    <div class="container-fluid hero-bg d-flex align-items-center">
+    <div class="container-fluid">
         <div class="hero-content text-center">
             <div class="row justify-content-center">
-                <div class="col-lg-8">
+                <div class="col-lg-10 col-xl-8">
                     <h1 class="hero-title fade-in">
-                        <i class="bi bi-ticket-perforated me-3"></i>
+                        <i class="bi bi-calendar-event me-3"></i>
                         EventTicketing
                     </h1>
-                    <p class="hero-subtitle slide-up">Discover amazing events, purchase tickets instantly, and create unforgettable memories with our modern ticketing platform</p>
-                    <div class="slide-up">
-                        <a asp-area="" asp-controller="Events" asp-action="Index" class="btn btn-light btn-lg me-3 shadow-custom">
-                            <i class="bi bi-compass"></i> Explore Events
+                    <p class="hero-subtitle slide-up">
+                        The premier platform for discovering, booking, and managing events.
+                        Connect with experiences that matter, powered by cutting-edge technology and trusted by thousands.
+                    </p>
+
+                    <!-- Hero Buttons -->
+                    <div class="hero-buttons d-flex justify-content-center flex-wrap slide-up">
+                        <a asp-area="" asp-controller="Events" asp-action="Index" class="btn btn-primary btn-lg me-3 mb-2">
+                            <i class="bi bi-search me-2"></i>Explore Events
                         </a>
                         @if (User.Identity.IsAuthenticated)
                         {
                             @if (User.IsInRole("EventOrganizer"))
                             {
-                                <a asp-area="" asp-controller="Events" asp-action="Create" class="btn btn-outline-light btn-lg shadow-custom">
-                                    <i class="bi bi-plus-circle"></i> Create Event
+                                <a asp-area="" asp-controller="Events" asp-action="Create" class="btn btn-outline-light btn-lg mb-2">
+                                    <i class="bi bi-plus-circle me-2"></i>Create Event
+                                </a>
+                            }
+                            else if (User.IsInRole("Customer"))
+                            {
+                                <a asp-area="" asp-controller="Tickets" asp-action="Index" class="btn btn-outline-light btn-lg mb-2">
+                                    <i class="bi bi-ticket-perforated me-2"></i>My Tickets
                                 </a>
                             }
                         }
                         else
                         {
-                            <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-outline-light btn-lg shadow-custom">
-                                <i class="bi bi-person-plus"></i> Join Now
+                            <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-outline-light btn-lg mb-2">
+                                <i class="bi bi-person-plus me-2"></i>Get Started
                             </a>
                         }
+                    </div>
+
+                    <!-- Trust Indicators -->
+                    <div class="hero-trust-indicators mt-4 slide-up">
+                        <div class="d-flex justify-content-center align-items-center flex-wrap gap-4 text-center">
+                            <div class="d-flex align-items-center opacity-75">
+                                <i class="bi bi-shield-check me-2"></i>
+                                <span>Secure Payments</span>
+                            </div>
+                            <div class="d-flex align-items-center opacity-75">
+                                <i class="bi bi-clock me-2"></i>
+                                <span>24/7 Support</span>
+                            </div>
+                            <div class="d-flex align-items-center opacity-75">
+                                <i class="bi bi-phone me-2"></i>
+                                <span>Mobile Ready</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -41,6 +70,7 @@
 </div>
 
 <!-- Featured Events Section -->
+<main role="main" class="pb-3">
 @if (Model != null && Model.Any())
 {
     <div class="container my-5">
@@ -184,3 +214,4 @@
         </div>
     </div>
 </div>
+</main>
