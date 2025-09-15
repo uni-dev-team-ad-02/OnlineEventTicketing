@@ -18,7 +18,7 @@ namespace OnlineEventTicketing.Business
             _logger = logger;
         }
 
-        public async Task<string?> CreateCheckoutSessionAsync(decimal amount, string customerId, string description, string successUrl, string cancelUrl)
+        public async Task<string?> CreateCheckoutSessionAsync(decimal amount, string customerId, string description, string successUrl, string cancelUrl, List<int>? paymentIds = null)
         {
             try
             {
@@ -51,6 +51,12 @@ namespace OnlineEventTicketing.Business
                         { "description", description }
                     }
                 };
+
+                // Add payment IDs to metadata if provided
+                if (paymentIds != null && paymentIds.Any())
+                {
+                    options.Metadata.Add("payment_ids", string.Join(",", paymentIds));
+                }
 
                 var session = await _sessionService.CreateAsync(options);
                 return session.Url;

@@ -147,6 +147,32 @@ namespace OnlineEventTicketing.Controllers
             var finalPrice = await _eventService.CalculateTicketPriceAsync(model.EventId, model.PromotionCode);
             var totalAmount = finalPrice * model.TicketQuantity;
 
+            // Create tickets and payment records FIRST
+            var purchasedTickets = new List<Ticket>();
+            var paymentIds = new List<int>();
+
+            for (int i = 0; i < model.TicketQuantity; i++)
+            {
+                var ticket = await _ticketService.PurchaseTicketAsync(model.EventId, user.Id, model.PromotionCode);
+                if (ticket != null)
+                {
+                    purchasedTickets.Add(ticket);
+
+                    // Create pending payment record
+                    var payment = await _paymentService.ProcessPaymentAsync(ticket.Id, user.Id, PaymentMethod.Stripe, finalPrice);
+                    if (payment != null)
+                    {
+                        paymentIds.Add(payment.Id);
+                    }
+                }
+            }
+
+            if (purchasedTickets.Count != model.TicketQuantity)
+            {
+                TempData["Error"] = "Failed to reserve all requested tickets.";
+                return RedirectToAction(nameof(Purchase), new { id = model.EventId });
+            }
+
             var successUrl = Url.Action("PurchaseSuccess", "Tickets", new { eventId = model.EventId, quantity = model.TicketQuantity, promotionCode = model.PromotionCode }, Request.Scheme);
             var cancelUrl = Url.Action("Purchase", "Tickets", new { id = model.EventId }, Request.Scheme);
 
@@ -155,7 +181,8 @@ namespace OnlineEventTicketing.Controllers
                 user.Id,
                 $"Ticket purchase for {eventItem.Title} - {model.TicketQuantity} ticket(s)",
                 successUrl!,
-                cancelUrl!
+                cancelUrl!,
+                paymentIds
             );
 
             if (string.IsNullOrEmpty(checkoutUrl))
@@ -183,35 +210,9 @@ namespace OnlineEventTicketing.Controllers
                 return RedirectToAction("Index");
             }
 
-            // Calculate final price with promotion
-            var finalPrice = await _eventService.CalculateTicketPriceAsync(eventId, promotionCode);
-
-            // Process multiple tickets
-            var purchasedTickets = new List<Ticket>();
-            for (int i = 0; i < quantity; i++)
-            {
-                var ticket = await _ticketService.PurchaseTicketAsync(eventId, user.Id, promotionCode);
-                if (ticket != null)
-                {
-                    purchasedTickets.Add(ticket);
-
-                    // Create a pending payment record - webhook will update status when payment completes
-                    await _paymentService.ProcessPaymentAsync(ticket.Id, user.Id, PaymentMethod.Stripe, finalPrice);
-                }
-            }
-
-            if (purchasedTickets.Count == quantity)
-            {
-                TempData["Success"] = $"Successfully purchased {quantity} ticket(s)! Payment is being processed via Stripe.";
-            }
-            else if (purchasedTickets.Count > 0)
-            {
-                TempData["Warning"] = $"Only {purchasedTickets.Count} out of {quantity} tickets were purchased.";
-            }
-            else
-            {
-                TempData["Error"] = "Failed to process ticket purchase. Please contact support.";
-            }
+            // Tickets and payments were already created before checkout
+            // Just confirm successful redirect from Stripe
+            TempData["Success"] = $"Payment completed successfully! You have purchased {quantity} ticket(s).";
 
             return RedirectToAction(nameof(Index));
         }

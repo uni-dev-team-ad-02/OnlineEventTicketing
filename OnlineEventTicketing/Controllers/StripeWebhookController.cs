@@ -110,67 +110,55 @@ namespace OnlineEventTicketing.Controllers
 
             var customerId = session.Metadata?.GetValueOrDefault("customer_id");
             var description = session.Metadata?.GetValueOrDefault("description");
+            var paymentIdsString = session.Metadata?.GetValueOrDefault("payment_ids");
 
-            if (string.IsNullOrEmpty(customerId))
+            _logger.LogInformation("Session metadata - Customer: {CustomerId}, PaymentIds: {PaymentIds}",
+                customerId, paymentIdsString);
+
+            if (string.IsNullOrEmpty(paymentIdsString))
             {
-                _logger.LogWarning("No customer_id found in session metadata for session: {SessionId}", session.Id);
+                _logger.LogWarning("No payment_ids found in session metadata for session: {SessionId}", session.Id);
                 return;
             }
 
             try
             {
-                var amountInDollars = (decimal)(session.AmountTotal ?? 0) / 100;
+                // Parse payment IDs from metadata
+                var paymentIdStrings = paymentIdsString.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                var paymentIds = new List<int>();
 
-                _logger.LogInformation("Searching for pending payment - Customer: {CustomerId}, Amount: ${Amount}, PaymentIntent: {PaymentIntent}",
-                    customerId, amountInDollars, session.PaymentIntentId);
-
-                // Find pending payment by customer and amount
-                var payment = await _paymentService.GetPendingPaymentByCustomerAndAmountAsync(customerId, amountInDollars);
-
-                if (payment != null)
+                foreach (var paymentIdString in paymentIdStrings)
                 {
-                    _logger.LogInformation("Found pending payment {PaymentId} for customer {CustomerId}", payment.Id, customerId);
-
-                    await _paymentService.UpdatePaymentStatusAsync(payment.Id, Data.Entity.PaymentStatus.Completed);
-                    payment.StripePaymentIntentId = session.PaymentIntentId;
-                    await _paymentService.UpdatePaymentAsync(payment);
-
-                    _logger.LogInformation("Payment {PaymentId} marked as completed for session: {SessionId}",
-                        payment.Id, session.Id);
-                }
-                else
-                {
-                    _logger.LogWarning("No pending payment found for customer {CustomerId} with amount ${Amount}",
-                        customerId, amountInDollars);
-
-                    // Try to find any pending payments for this customer for debugging
-                    var allCustomerPayments = await _paymentService.GetPaymentsByCustomerIdAsync(customerId);
-                    var pendingPayments = allCustomerPayments.Where(p => p.Status == Data.Entity.PaymentStatus.Pending).ToList();
-
-                    _logger.LogInformation("Customer {CustomerId} has {PendingCount} pending payments total",
-                        customerId, pendingPayments.Count);
-
-                    foreach (var pendingPayment in pendingPayments)
+                    if (int.TryParse(paymentIdString.Trim(), out var paymentId))
                     {
-                        _logger.LogInformation("Pending payment {PaymentId}: Amount=${Amount}, Created={Created}",
-                            pendingPayment.Id, pendingPayment.Amount, pendingPayment.CreatedAt);
-                    }
-
-                    // Fallback: try to update the most recent pending payment for this customer
-                    var mostRecentPending = pendingPayments.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
-                    if (mostRecentPending != null)
-                    {
-                        _logger.LogInformation("Fallback: Using most recent pending payment {PaymentId} for customer {CustomerId}",
-                            mostRecentPending.Id, customerId);
-
-                        await _paymentService.UpdatePaymentStatusAsync(mostRecentPending.Id, Data.Entity.PaymentStatus.Completed);
-                        mostRecentPending.StripePaymentIntentId = session.PaymentIntentId;
-                        await _paymentService.UpdatePaymentAsync(mostRecentPending);
-
-                        _logger.LogInformation("Fallback payment {PaymentId} marked as completed for session: {SessionId}",
-                            mostRecentPending.Id, session.Id);
+                        paymentIds.Add(paymentId);
                     }
                 }
+
+                _logger.LogInformation("Updating {Count} payments from session metadata: [{PaymentIds}]",
+                    paymentIds.Count, string.Join(", ", paymentIds));
+
+                var updatedCount = 0;
+                foreach (var paymentId in paymentIds)
+                {
+                    var payment = await _paymentService.GetPaymentByIdAsync(paymentId);
+                    if (payment != null && payment.Status == Data.Entity.PaymentStatus.Pending)
+                    {
+                        await _paymentService.UpdatePaymentStatusAsync(payment.Id, Data.Entity.PaymentStatus.Completed);
+                        payment.StripePaymentIntentId = session.PaymentIntentId;
+                        await _paymentService.UpdatePaymentAsync(payment);
+
+                        _logger.LogInformation("Payment {PaymentId} marked as completed", payment.Id);
+                        updatedCount++;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Payment {PaymentId} not found or not pending", paymentId);
+                    }
+                }
+
+                _logger.LogInformation("Successfully updated {UpdatedCount} out of {TotalCount} payments for session: {SessionId}",
+                    updatedCount, paymentIds.Count, session.Id);
             }
             catch (Exception e)
             {
