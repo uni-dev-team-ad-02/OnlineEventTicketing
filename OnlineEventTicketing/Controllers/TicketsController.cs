@@ -13,18 +13,24 @@ namespace OnlineEventTicketing.Controllers
         private readonly ITicketService _ticketService;
         private readonly IEventService _eventService;
         private readonly IPaymentService _paymentService;
+        private readonly IStripeService _stripeService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IConfiguration _configuration;
 
         public TicketsController(
-            ITicketService ticketService, 
+            ITicketService ticketService,
             IEventService eventService,
             IPaymentService paymentService,
-            UserManager<ApplicationUser> userManager)
+            IStripeService stripeService,
+            UserManager<ApplicationUser> userManager,
+            IConfiguration configuration)
         {
             _ticketService = ticketService;
             _eventService = eventService;
             _paymentService = paymentService;
+            _stripeService = stripeService;
             _userManager = userManager;
+            _configuration = configuration;
         }
 
         // GET: Tickets
@@ -72,6 +78,15 @@ namespace OnlineEventTicketing.Controllers
                 return RedirectToAction("Details", "Events", new { id });
             }
 
+            var isStripeEnabled = _configuration.GetValue<bool>("Stripe:IsEnabled");
+            var paymentMethods = new List<string>();
+
+            if (isStripeEnabled)
+            {
+                paymentMethods.Add("Stripe");
+            }
+            paymentMethods.Add("CreditCard");
+
             var viewModel = new PurchaseTicketViewModel
             {
                 EventId = eventItem.Id,
@@ -80,10 +95,110 @@ namespace OnlineEventTicketing.Controllers
                 EventLocation = eventItem.Location,
                 BasePrice = eventItem.BasePrice,
                 AvailableTickets = eventItem.AvailableTickets,
-                TotalPrice = eventItem.BasePrice
+                TotalPrice = eventItem.BasePrice,
+                IsStripeEnabled = isStripeEnabled,
+                PaymentMethods = paymentMethods,
+                PaymentMethod = isStripeEnabled ? "Stripe" : "CreditCard"
             };
 
             return View(viewModel);
+        }
+
+        // POST: Tickets/CreateStripeCheckout
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateStripeCheckout(PurchaseTicketViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var eventItem = await _eventService.GetEventByIdAsync(model.EventId);
+            if (eventItem == null || !eventItem.IsActive || eventItem.AvailableTickets < model.TicketQuantity)
+            {
+                TempData["Error"] = "Event is not available or insufficient tickets available.";
+                return RedirectToAction(nameof(Purchase), new { id = model.EventId });
+            }
+
+            var isStripeEnabled = _configuration.GetValue<bool>("Stripe:IsEnabled");
+            if (!isStripeEnabled)
+            {
+                TempData["Error"] = "Stripe checkout is not available.";
+                return RedirectToAction(nameof(Purchase), new { id = model.EventId });
+            }
+
+            var finalPrice = await _eventService.CalculateTicketPriceAsync(model.EventId, model.PromotionCode);
+            var totalAmount = finalPrice * model.TicketQuantity;
+
+            var successUrl = Url.Action("PurchaseSuccess", "Tickets", new { eventId = model.EventId, quantity = model.TicketQuantity, promotionCode = model.PromotionCode }, Request.Scheme);
+            var cancelUrl = Url.Action("Purchase", "Tickets", new { id = model.EventId }, Request.Scheme);
+
+            var checkoutUrl = await _stripeService.CreateCheckoutSessionAsync(
+                totalAmount,
+                user.Id,
+                $"Ticket purchase for {eventItem.Title} - {model.TicketQuantity} ticket(s)",
+                successUrl!,
+                cancelUrl!
+            );
+
+            if (string.IsNullOrEmpty(checkoutUrl))
+            {
+                TempData["Error"] = "Failed to create Stripe checkout session.";
+                return RedirectToAction(nameof(Purchase), new { id = model.EventId });
+            }
+
+            return Redirect(checkoutUrl);
+        }
+
+        // GET: Tickets/PurchaseSuccess
+        public async Task<IActionResult> PurchaseSuccess(int eventId, int quantity, string? promotionCode)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var eventItem = await _eventService.GetEventByIdAsync(eventId);
+            if (eventItem == null)
+            {
+                TempData["Error"] = "Event not found.";
+                return RedirectToAction("Index");
+            }
+
+            // Calculate final price with promotion
+            var finalPrice = await _eventService.CalculateTicketPriceAsync(eventId, promotionCode);
+
+            // Process multiple tickets
+            var purchasedTickets = new List<Ticket>();
+            for (int i = 0; i < quantity; i++)
+            {
+                var ticket = await _ticketService.PurchaseTicketAsync(eventId, user.Id, promotionCode);
+                if (ticket != null)
+                {
+                    purchasedTickets.Add(ticket);
+
+                    // Since payment was already processed by Stripe, create a payment record
+                    await _paymentService.ProcessPaymentAsync(ticket.Id, user.Id, PaymentMethod.Stripe, finalPrice);
+                }
+            }
+
+            if (purchasedTickets.Count == quantity)
+            {
+                TempData["Success"] = $"Successfully purchased {quantity} ticket(s)! Payment processed via Stripe.";
+            }
+            else if (purchasedTickets.Count > 0)
+            {
+                TempData["Warning"] = $"Only {purchasedTickets.Count} out of {quantity} tickets were purchased.";
+            }
+            else
+            {
+                TempData["Error"] = "Failed to process ticket purchase despite successful payment. Please contact support.";
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         // POST: Tickets/Purchase
@@ -106,11 +221,18 @@ namespace OnlineEventTicketing.Controllers
                     return RedirectToAction("Details", "Events", new { id = model.EventId });
                 }
 
-                // Calculate final price with promotion
-                var finalPrice = await _eventService.CalculateTicketPriceAsync(model.EventId, model.PromotionCode);
-                var totalPrice = finalPrice * model.TicketQuantity;
+                // Check if Stripe is enabled and payment method is Stripe
+                var isStripeEnabled = _configuration.GetValue<bool>("Stripe:IsEnabled");
+                if (isStripeEnabled && model.PaymentMethod == "Stripe")
+                {
+                    // Redirect to Stripe Checkout
+                    return await CreateStripeCheckout(model);
+                }
 
-                // Process multiple tickets
+                // Calculate final price with promotion for non-Stripe payments
+                var finalPrice = await _eventService.CalculateTicketPriceAsync(model.EventId, model.PromotionCode);
+
+                // Process multiple tickets for non-Stripe payments
                 var purchasedTickets = new List<Ticket>();
                 for (int i = 0; i < model.TicketQuantity; i++)
                 {
@@ -119,7 +241,7 @@ namespace OnlineEventTicketing.Controllers
                     {
                         purchasedTickets.Add(ticket);
 
-                        // Process payment for each ticket
+                        // Process payment for non-Stripe methods
                         if (Enum.TryParse<PaymentMethod>(model.PaymentMethod, out var paymentMethod))
                         {
                             await _paymentService.ProcessPaymentAsync(ticket.Id, user.Id, paymentMethod, finalPrice);
@@ -143,6 +265,11 @@ namespace OnlineEventTicketing.Controllers
                 }
             }
 
+            return await ReloadPurchaseView(model);
+        }
+
+        private async Task<IActionResult> ReloadPurchaseView(PurchaseTicketViewModel model)
+        {
             // Reload event data for view
             var reloadedEvent = await _eventService.GetEventByIdAsync(model.EventId);
             if (reloadedEvent != null)
@@ -152,6 +279,17 @@ namespace OnlineEventTicketing.Controllers
                 model.EventLocation = reloadedEvent.Location;
                 model.BasePrice = reloadedEvent.BasePrice;
                 model.AvailableTickets = reloadedEvent.AvailableTickets;
+
+                var isStripeEnabled = _configuration.GetValue<bool>("Stripe:IsEnabled");
+                model.IsStripeEnabled = isStripeEnabled;
+
+                var paymentMethods = new List<string>();
+                if (isStripeEnabled)
+                {
+                    paymentMethods.Add("Stripe");
+                }
+                paymentMethods.Add("CreditCard");
+                model.PaymentMethods = paymentMethods;
             }
 
             return View(model);

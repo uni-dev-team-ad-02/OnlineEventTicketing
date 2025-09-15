@@ -7,11 +7,16 @@ namespace OnlineEventTicketing.Business
     {
         private readonly IPaymentRepository _paymentRepository;
         private readonly ITicketRepository _ticketRepository;
+        private readonly IStripeService _stripeService;
+        private readonly IConfiguration _configuration;
 
-        public PaymentService(IPaymentRepository paymentRepository, ITicketRepository ticketRepository)
+        public PaymentService(IPaymentRepository paymentRepository, ITicketRepository ticketRepository,
+            IStripeService stripeService, IConfiguration configuration)
         {
             _paymentRepository = paymentRepository;
             _ticketRepository = ticketRepository;
+            _stripeService = stripeService;
+            _configuration = configuration;
         }
 
         public async Task<IEnumerable<Payment>> GetAllPaymentsAsync()
@@ -43,17 +48,26 @@ namespace OnlineEventTicketing.Business
                 Amount = amount,
                 PaymentMethod = paymentMethod,
                 Status = PaymentStatus.Pending,
-                PaymentDate = DateTime.UtcNow
+                PaymentDate = DateTime.UtcNow,
+                TransactionId = Guid.NewGuid().ToString()
             };
 
             var success = await _paymentRepository.CreatePaymentAsync(payment);
             if (!success) return null;
 
-            // Simulate payment processing
-            await Task.Delay(1000); // Simulate processing time
+            // For Stripe payments (hosted checkout), mark as completed since payment was already processed
+            // For other payment methods, simulate payment processing
+            if (paymentMethod == PaymentMethod.Stripe)
+            {
+                payment.Status = PaymentStatus.Completed;
+            }
+            else
+            {
+                // Simulate payment processing for non-Stripe methods
+                await Task.Delay(1000); // Simulate processing time
+                payment.Status = PaymentStatus.Completed;
+            }
 
-            // Update payment status to completed
-            payment.Status = PaymentStatus.Completed;
             await _paymentRepository.UpdatePaymentAsync(payment);
 
             return payment;

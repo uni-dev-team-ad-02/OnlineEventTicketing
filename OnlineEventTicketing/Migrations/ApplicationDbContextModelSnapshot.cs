@@ -309,7 +309,7 @@ namespace OnlineEventTicketing.Migrations
 
                     b.HasIndex("OrganizerId");
 
-                    b.ToTable("Events");
+                    b.ToTable("Events", (string)null);
                 });
 
             modelBuilder.Entity("OnlineEventTicketing.Data.Entity.Payment", b =>
@@ -359,7 +359,7 @@ namespace OnlineEventTicketing.Migrations
 
                     b.HasIndex("TicketId");
 
-                    b.ToTable("Payments");
+                    b.ToTable("Payments", (string)null);
                 });
 
             modelBuilder.Entity("OnlineEventTicketing.Data.Entity.Promotion", b =>
@@ -411,7 +411,7 @@ namespace OnlineEventTicketing.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("Promotions");
+                    b.ToTable("Promotions", (string)null);
                 });
 
             modelBuilder.Entity("OnlineEventTicketing.Data.Entity.Report", b =>
@@ -450,7 +450,7 @@ namespace OnlineEventTicketing.Migrations
 
                     b.HasIndex("OrganizerId");
 
-                    b.ToTable("Reports");
+                    b.ToTable("Reports", (string)null);
                 });
 
             modelBuilder.Entity("OnlineEventTicketing.Data.Entity.Ticket", b =>
@@ -505,7 +505,7 @@ namespace OnlineEventTicketing.Migrations
                     b.HasIndex("QrCode")
                         .IsUnique();
 
-                    b.ToTable("Tickets");
+                    b.ToTable("Tickets", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

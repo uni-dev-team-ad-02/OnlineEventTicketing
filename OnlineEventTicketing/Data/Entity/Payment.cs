@@ -18,7 +18,8 @@ namespace OnlineEventTicketing.Data.Entity
         DebitCard,
         PayPal,
         BankTransfer,
-        Cash
+        Cash,
+        Stripe
     }
 
     public class Payment : CommonProps
@@ -36,6 +37,9 @@ namespace OnlineEventTicketing.Data.Entity
         [Required]
         [StringLength(100)]
         public string TransactionId { get; set; } = string.Empty;
+
+        [StringLength(100)]
+        public string? StripePaymentIntentId { get; set; }
 
         [Required]
         public PaymentMethod PaymentMethod { get; set; }

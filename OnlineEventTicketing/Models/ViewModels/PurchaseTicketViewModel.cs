@@ -31,12 +31,8 @@ namespace OnlineEventTicketing.Models.ViewModels
         public string FormattedDiscount => Discount.ToString("C");
         public string FormattedEventDate => EventDate.ToString("MMM dd, yyyy 'at' h:mm tt");
 
-        public List<string> PaymentMethods { get; set; } = new List<string>
-        {
-            "CreditCard",
-            "DebitCard",
-            "PayPal",
-            "BankTransfer"
-        };
+        public List<string> PaymentMethods { get; set; } = new List<string>();
+
+        public bool IsStripeEnabled { get; set; }
     }
 }

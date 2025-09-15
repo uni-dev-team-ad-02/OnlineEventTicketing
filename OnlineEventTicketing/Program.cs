@@ -30,6 +30,7 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IStripeService, StripeService>();
 
 builder.Services.AddControllersWithViews();
 
