@@ -67,7 +67,7 @@ namespace OnlineEventTicketing.Controllers
                     CustomerId = ticket.CustomerId,
                     CustomerName = ticket.Customer != null ? $"{ticket.Customer.FirstName} {ticket.Customer.LastName}" : "Unknown Customer",
                     PaymentStatus = latestPayment?.Status ?? PaymentStatus.Pending,
-                    PaymentMethod = latestPayment?.PaymentMethod ?? PaymentMethod.CreditCard
+                    PaymentMethod = latestPayment?.PaymentMethod ?? PaymentMethod.Stripe
                 };
 
                 viewModelList.Add(ticketViewModel);
@@ -110,7 +110,6 @@ namespace OnlineEventTicketing.Controllers
                 BasePrice = eventItem.BasePrice,
                 AvailableTickets = eventItem.AvailableTickets,
                 TotalPrice = eventItem.BasePrice,
-                IsStripeEnabled = true,
                 PaymentMethod = "Stripe"
             };
 
@@ -261,7 +260,6 @@ namespace OnlineEventTicketing.Controllers
                 model.EventLocation = reloadedEvent.Location;
                 model.BasePrice = reloadedEvent.BasePrice;
                 model.AvailableTickets = reloadedEvent.AvailableTickets;
-                model.IsStripeEnabled = true;
                 model.PaymentMethod = "Stripe";
             }
 

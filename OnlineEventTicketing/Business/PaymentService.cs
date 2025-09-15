@@ -60,18 +60,8 @@ namespace OnlineEventTicketing.Business
             var success = await _paymentRepository.CreatePaymentAsync(payment);
             if (!success) return null;
 
-            // For Stripe payments, keep as pending until webhook confirms payment
-            // For other payment methods, simulate payment processing
-            if (paymentMethod == PaymentMethod.Stripe)
-            {
-                payment.Status = PaymentStatus.Pending;
-            }
-            else
-            {
-                // Simulate payment processing for non-Stripe methods
-                await Task.Delay(1000); // Simulate processing time
-                payment.Status = PaymentStatus.Completed;
-            }
+            // All payments are Stripe-based and start as pending until webhook confirms
+            payment.Status = PaymentStatus.Pending;
 
             await _paymentRepository.UpdatePaymentAsync(payment);
 

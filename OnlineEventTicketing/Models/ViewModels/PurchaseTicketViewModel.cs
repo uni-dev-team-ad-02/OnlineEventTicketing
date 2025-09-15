@@ -30,7 +30,5 @@ namespace OnlineEventTicketing.Models.ViewModels
         public string FormattedTotalPrice => TotalPrice.ToString("C");
         public string FormattedDiscount => Discount.ToString("C");
         public string FormattedEventDate => EventDate.ToString("MMM dd, yyyy 'at' h:mm tt");
-
-        public bool IsStripeEnabled { get; set; } = true;
     }
 }
