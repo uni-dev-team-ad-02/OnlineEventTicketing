@@ -33,14 +33,36 @@ namespace OnlineEventTicketing.Controllers
         [HttpPost]
         public async Task<IActionResult> Handle()
         {
-            var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
-            var endpointSecret = _configuration["Stripe:WebhookSecret"];
-
             try
             {
-                var stripeEvent = await _stripeService.ConstructWebhookEventAsync(json, Request.Headers["Stripe-Signature"], endpointSecret);
+                var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+                var endpointSecret = _configuration["Stripe:WebhookSecret"];
+                var stripeSignature = Request.Headers["Stripe-Signature"].FirstOrDefault();
 
-                _logger.LogInformation("Received Stripe webhook: {EventType} with ID: {EventId}", stripeEvent.Type, stripeEvent.Id);
+                _logger.LogInformation("Webhook received - Body length: {BodyLength}, Has signature: {HasSignature}, Has secret: {HasSecret}",
+                    json?.Length ?? 0, !string.IsNullOrEmpty(stripeSignature), !string.IsNullOrEmpty(endpointSecret));
+
+                if (string.IsNullOrEmpty(endpointSecret))
+                {
+                    _logger.LogError("Stripe webhook secret not configured");
+                    return BadRequest("Webhook secret not configured");
+                }
+
+                if (string.IsNullOrEmpty(stripeSignature))
+                {
+                    _logger.LogError("Missing Stripe-Signature header");
+                    return BadRequest("Missing Stripe-Signature header");
+                }
+
+                if (string.IsNullOrEmpty(json))
+                {
+                    _logger.LogError("Empty webhook body received");
+                    return BadRequest("Empty webhook body");
+                }
+
+                var stripeEvent = await _stripeService.ConstructWebhookEventAsync(json, stripeSignature, endpointSecret);
+
+                _logger.LogInformation("Successfully verified Stripe webhook: {EventType} with ID: {EventId}", stripeEvent.Type, stripeEvent.Id);
 
                 switch (stripeEvent.Type)
                 {
@@ -69,13 +91,13 @@ namespace OnlineEventTicketing.Controllers
             }
             catch (StripeException e)
             {
-                _logger.LogError(e, "Stripe webhook signature verification failed");
-                return BadRequest();
+                _logger.LogError(e, "Stripe webhook signature verification failed: {Message}", e.Message);
+                return BadRequest($"Signature verification failed: {e.Message}");
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Error processing Stripe webhook");
-                return StatusCode(500);
+                _logger.LogError(e, "Error processing Stripe webhook: {Message}", e.Message);
+                return StatusCode(500, $"Internal error: {e.Message}");
             }
         }
 
