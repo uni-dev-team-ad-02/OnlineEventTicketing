@@ -20,7 +20,7 @@ namespace OnlineEventTicketing.Models.ViewModels
 
         [Required(ErrorMessage = "Payment method is required")]
         [Display(Name = "Payment Method")]
-        public string PaymentMethod { get; set; } = "CreditCard";
+        public string PaymentMethod { get; set; } = "Stripe";
 
         public decimal TotalPrice { get; set; }
         public decimal Discount { get; set; }
@@ -31,8 +31,6 @@ namespace OnlineEventTicketing.Models.ViewModels
         public string FormattedDiscount => Discount.ToString("C");
         public string FormattedEventDate => EventDate.ToString("MMM dd, yyyy 'at' h:mm tt");
 
-        public List<string> PaymentMethods { get; set; } = new List<string>();
-
-        public bool IsStripeEnabled { get; set; }
+        public bool IsStripeEnabled { get; set; } = true;
     }
 }

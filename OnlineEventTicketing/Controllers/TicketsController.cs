@@ -94,13 +94,12 @@ namespace OnlineEventTicketing.Controllers
             }
 
             var isStripeEnabled = _configuration.GetValue<bool>("Stripe:IsEnabled");
-            var paymentMethods = new List<string>();
 
-            if (isStripeEnabled)
+            if (!isStripeEnabled)
             {
-                paymentMethods.Add("Stripe");
+                TempData["Error"] = "Payment system is currently unavailable.";
+                return RedirectToAction("Details", "Events", new { id });
             }
-            paymentMethods.Add("CreditCard");
 
             var viewModel = new PurchaseTicketViewModel
             {
@@ -111,9 +110,8 @@ namespace OnlineEventTicketing.Controllers
                 BasePrice = eventItem.BasePrice,
                 AvailableTickets = eventItem.AvailableTickets,
                 TotalPrice = eventItem.BasePrice,
-                IsStripeEnabled = isStripeEnabled,
-                PaymentMethods = paymentMethods,
-                PaymentMethod = isStripeEnabled ? "Stripe" : "CreditCard"
+                IsStripeEnabled = true,
+                PaymentMethod = "Stripe"
             };
 
             return View(viewModel);
@@ -237,48 +235,16 @@ namespace OnlineEventTicketing.Controllers
                     return RedirectToAction("Details", "Events", new { id = model.EventId });
                 }
 
-                // Check if Stripe is enabled and payment method is Stripe
+                // Only Stripe payments are supported
                 var isStripeEnabled = _configuration.GetValue<bool>("Stripe:IsEnabled");
-                if (isStripeEnabled && model.PaymentMethod == "Stripe")
+                if (!isStripeEnabled)
                 {
-                    // Redirect to Stripe Checkout
-                    return await CreateStripeCheckout(model);
+                    TempData["Error"] = "Payment system is currently unavailable.";
+                    return RedirectToAction("Details", "Events", new { id = model.EventId });
                 }
 
-                // Calculate final price with promotion for non-Stripe payments
-                var finalPrice = await _eventService.CalculateTicketPriceAsync(model.EventId, model.PromotionCode);
-
-                // Process multiple tickets for non-Stripe payments
-                var purchasedTickets = new List<Ticket>();
-                for (int i = 0; i < model.TicketQuantity; i++)
-                {
-                    var ticket = await _ticketService.PurchaseTicketAsync(model.EventId, user.Id, model.PromotionCode);
-                    if (ticket != null)
-                    {
-                        purchasedTickets.Add(ticket);
-
-                        // Process payment for non-Stripe methods
-                        if (Enum.TryParse<PaymentMethod>(model.PaymentMethod, out var paymentMethod))
-                        {
-                            await _paymentService.ProcessPaymentAsync(ticket.Id, user.Id, paymentMethod, finalPrice);
-                        }
-                    }
-                }
-
-                if (purchasedTickets.Count == model.TicketQuantity)
-                {
-                    TempData["Success"] = $"Successfully purchased {model.TicketQuantity} ticket(s)!";
-                    return RedirectToAction(nameof(Index));
-                }
-                else if (purchasedTickets.Count > 0)
-                {
-                    TempData["Warning"] = $"Only {purchasedTickets.Count} out of {model.TicketQuantity} tickets were purchased.";
-                    return RedirectToAction(nameof(Index));
-                }
-                else
-                {
-                    TempData["Error"] = "Failed to purchase tickets. Please try again.";
-                }
+                // Redirect to Stripe Checkout
+                return await CreateStripeCheckout(model);
             }
 
             return await ReloadPurchaseView(model);
@@ -295,17 +261,8 @@ namespace OnlineEventTicketing.Controllers
                 model.EventLocation = reloadedEvent.Location;
                 model.BasePrice = reloadedEvent.BasePrice;
                 model.AvailableTickets = reloadedEvent.AvailableTickets;
-
-                var isStripeEnabled = _configuration.GetValue<bool>("Stripe:IsEnabled");
-                model.IsStripeEnabled = isStripeEnabled;
-
-                var paymentMethods = new List<string>();
-                if (isStripeEnabled)
-                {
-                    paymentMethods.Add("Stripe");
-                }
-                paymentMethods.Add("CreditCard");
-                model.PaymentMethods = paymentMethods;
+                model.IsStripeEnabled = true;
+                model.PaymentMethod = "Stripe";
             }
 
             return View(model);

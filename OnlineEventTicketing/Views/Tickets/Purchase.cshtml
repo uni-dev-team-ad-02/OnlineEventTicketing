@@ -44,16 +44,13 @@
                                 <span asp-validation-for="TicketQuantity" class="text-danger"></span>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label asp-for="PaymentMethod" class="form-label"></label>
-                                <select asp-for="PaymentMethod" class="form-select">
-                                    @foreach (var method in Model.PaymentMethods)
-                                    {
-                                        <option value="@method" selected="@(Model.PaymentMethod == method)">
-                                            @method.Replace("Card", " Card")
-                                        </option>
-                                    }
-                                </select>
-                                <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+                                <label class="form-label">Payment Method</label>
+                                <div class="form-control-plaintext d-flex align-items-center">
+                                    <i class="bi bi-credit-card me-2 text-primary"></i>
+                                    <span class="fw-bold">Secure Payment via Stripe</span>
+                                </div>
+                                <small class="text-muted">All major credit and debit cards accepted</small>
+                                <input type="hidden" asp-for="PaymentMethod" value="Stripe" />
                             </div>
                         </div>
                         
@@ -109,7 +106,7 @@
                                 @if (Model.AvailableTickets > 0)
                                 {
                                     <button type="submit" class="btn btn-success-custom btn-lg">
-                                        <i class="bi bi-credit-card me-2"></i>Complete Purchase
+                                        <i class="bi bi-credit-card me-2"></i>Pay with Stripe
                                     </button>
                                 }
                                 else
