@@ -34,6 +34,11 @@ namespace OnlineEventTicketing.Business
             return await _paymentRepository.GetPaymentsByCustomerIdAsync(customerId);
         }
 
+        public async Task<IEnumerable<Payment>> GetPaymentsByTicketIdAsync(int ticketId)
+        {
+            return await _paymentRepository.GetPaymentsByTicketIdAsync(ticketId);
+        }
+
         public async Task<Payment?> ProcessPaymentAsync(int ticketId, string customerId, PaymentMethod paymentMethod, decimal amount)
         {
             // Validate ticket exists
@@ -55,11 +60,11 @@ namespace OnlineEventTicketing.Business
             var success = await _paymentRepository.CreatePaymentAsync(payment);
             if (!success) return null;
 
-            // For Stripe payments (hosted checkout), mark as completed since payment was already processed
+            // For Stripe payments, keep as pending until webhook confirms payment
             // For other payment methods, simulate payment processing
             if (paymentMethod == PaymentMethod.Stripe)
             {
-                payment.Status = PaymentStatus.Completed;
+                payment.Status = PaymentStatus.Pending;
             }
             else
             {
@@ -120,6 +125,25 @@ namespace OnlineEventTicketing.Business
         {
             var payment = await _paymentRepository.GetPaymentByTransactionIdAsync(transactionId);
             return payment != null && payment.Status == PaymentStatus.Completed;
+        }
+
+        public async Task<bool> UpdatePaymentAsync(Payment payment)
+        {
+            return await _paymentRepository.UpdatePaymentAsync(payment);
+        }
+
+        public async Task<Payment?> GetPendingPaymentByCustomerAndAmountAsync(string customerId, decimal amount)
+        {
+            var payments = await _paymentRepository.GetPaymentsByCustomerIdAsync(customerId);
+            return payments.FirstOrDefault(p => p.Status == PaymentStatus.Pending && p.Amount == amount);
+        }
+
+        public async Task<Payment?> GetPaymentByStripePaymentIntentIdAsync(string paymentIntentId)
+        {
+            if (string.IsNullOrEmpty(paymentIntentId)) return null;
+
+            var allPayments = await _paymentRepository.GetAllPaymentsAsync();
+            return allPayments.FirstOrDefault(p => p.StripePaymentIntentId == paymentIntentId);
         }
     }
 }

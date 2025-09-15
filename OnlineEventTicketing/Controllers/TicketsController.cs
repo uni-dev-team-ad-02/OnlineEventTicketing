@@ -43,22 +43,37 @@ namespace OnlineEventTicketing.Controllers
             }
 
             var tickets = await _ticketService.GetTicketsByCustomerIdAsync(user.Id);
-            var viewModel = tickets.Select(t => new TicketDisplayViewModel
+            var viewModelList = new List<TicketDisplayViewModel>();
+
+            foreach (var ticket in tickets)
             {
-                Id = t.Id,
-                QrCode = t.QrCode,
-                Price = t.Price,
-                SeatNumber = t.SeatNumber,
-                Status = t.Status,
-                PurchaseDate = t.PurchaseDate,
-                EventId = t.EventId,
-                EventTitle = t.Event?.Title ?? "Unknown Event",
-                EventDate = t.Event?.Date ?? DateTime.MinValue,
-                EventLocation = t.Event?.Location ?? "Unknown Location",
-                EventCategory = t.Event?.Category ?? "Unknown Category",
-                CustomerId = t.CustomerId,
-                CustomerName = t.Customer != null ? $"{t.Customer.FirstName} {t.Customer.LastName}" : "Unknown Customer"
-            }).OrderByDescending(t => t.PurchaseDate).ToList();
+                // Get payment information for this ticket
+                var payments = await _paymentService.GetPaymentsByTicketIdAsync(ticket.Id);
+                var latestPayment = payments.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
+
+                var ticketViewModel = new TicketDisplayViewModel
+                {
+                    Id = ticket.Id,
+                    QrCode = ticket.QrCode,
+                    Price = ticket.Price,
+                    SeatNumber = ticket.SeatNumber,
+                    Status = ticket.Status,
+                    PurchaseDate = ticket.PurchaseDate,
+                    EventId = ticket.EventId,
+                    EventTitle = ticket.Event?.Title ?? "Unknown Event",
+                    EventDate = ticket.Event?.Date ?? DateTime.MinValue,
+                    EventLocation = ticket.Event?.Location ?? "Unknown Location",
+                    EventCategory = ticket.Event?.Category ?? "Unknown Category",
+                    CustomerId = ticket.CustomerId,
+                    CustomerName = ticket.Customer != null ? $"{ticket.Customer.FirstName} {ticket.Customer.LastName}" : "Unknown Customer",
+                    PaymentStatus = latestPayment?.Status ?? PaymentStatus.Pending,
+                    PaymentMethod = latestPayment?.PaymentMethod ?? PaymentMethod.CreditCard
+                };
+
+                viewModelList.Add(ticketViewModel);
+            }
+
+            var viewModel = viewModelList.OrderByDescending(t => t.PurchaseDate).ToList();
 
             return View(viewModel);
         }
@@ -180,14 +195,14 @@ namespace OnlineEventTicketing.Controllers
                 {
                     purchasedTickets.Add(ticket);
 
-                    // Since payment was already processed by Stripe, create a payment record
+                    // Create a pending payment record - webhook will update status when payment completes
                     await _paymentService.ProcessPaymentAsync(ticket.Id, user.Id, PaymentMethod.Stripe, finalPrice);
                 }
             }
 
             if (purchasedTickets.Count == quantity)
             {
-                TempData["Success"] = $"Successfully purchased {quantity} ticket(s)! Payment processed via Stripe.";
+                TempData["Success"] = $"Successfully purchased {quantity} ticket(s)! Payment is being processed via Stripe.";
             }
             else if (purchasedTickets.Count > 0)
             {
@@ -195,7 +210,7 @@ namespace OnlineEventTicketing.Controllers
             }
             else
             {
-                TempData["Error"] = "Failed to process ticket purchase despite successful payment. Please contact support.";
+                TempData["Error"] = "Failed to process ticket purchase. Please contact support.";
             }
 
             return RedirectToAction(nameof(Index));
@@ -310,6 +325,10 @@ namespace OnlineEventTicketing.Controllers
                 return Forbid();
             }
 
+            // Get payment information for this ticket
+            var payments = await _paymentService.GetPaymentsByTicketIdAsync(ticket.Id);
+            var latestPayment = payments.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
+
             var viewModel = new TicketDisplayViewModel
             {
                 Id = ticket.Id,
@@ -324,7 +343,9 @@ namespace OnlineEventTicketing.Controllers
                 EventLocation = ticket.Event.Location,
                 EventCategory = ticket.Event.Category,
                 CustomerId = ticket.CustomerId,
-                CustomerName = $"{ticket.Customer.FirstName} {ticket.Customer.LastName}"
+                CustomerName = $"{ticket.Customer.FirstName} {ticket.Customer.LastName}",
+                PaymentStatus = latestPayment?.Status ?? PaymentStatus.Pending,
+                PaymentMethod = latestPayment?.PaymentMethod ?? PaymentMethod.CreditCard
             };
 
             return View(viewModel);

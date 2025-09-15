@@ -77,5 +77,18 @@ namespace OnlineEventTicketing.Business
                 return null;
             }
         }
+
+        public async Task<Stripe.Event> ConstructWebhookEventAsync(string json, string stripeSignature, string endpointSecret)
+        {
+            try
+            {
+                var stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, endpointSecret);
+                return await Task.FromResult(stripeEvent);
+            }
+            catch (StripeException ex)
+            {
+                throw new StripeException($"Webhook signature verification failed: {ex.Message}");
+            }
+        }
     }
 }

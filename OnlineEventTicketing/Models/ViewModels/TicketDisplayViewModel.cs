@@ -20,6 +20,9 @@ namespace OnlineEventTicketing.Models.ViewModels
         public string CustomerId { get; set; } = string.Empty;
         public string CustomerName { get; set; } = string.Empty;
 
+        public PaymentStatus PaymentStatus { get; set; }
+        public PaymentMethod PaymentMethod { get; set; }
+
         public string StatusDisplayName => Status switch
         {
             TicketStatus.Active => "Active",
@@ -38,12 +41,41 @@ namespace OnlineEventTicketing.Models.ViewModels
             _ => "bg-secondary"
         };
 
+        public string PaymentStatusDisplayName => PaymentStatus switch
+        {
+            PaymentStatus.Pending => "Payment Pending",
+            PaymentStatus.Completed => "Payment Completed",
+            PaymentStatus.Failed => "Payment Failed",
+            PaymentStatus.Refunded => "Payment Refunded",
+            _ => "Unknown"
+        };
+
+        public string PaymentStatusClass => PaymentStatus switch
+        {
+            PaymentStatus.Pending => "bg-warning text-dark",
+            PaymentStatus.Completed => "bg-success",
+            PaymentStatus.Failed => "bg-danger",
+            PaymentStatus.Refunded => "bg-info",
+            _ => "bg-secondary"
+        };
+
+        public string PaymentMethodDisplayName => PaymentMethod switch
+        {
+            PaymentMethod.CreditCard => "Credit Card",
+            PaymentMethod.DebitCard => "Debit Card",
+            PaymentMethod.PayPal => "PayPal",
+            PaymentMethod.BankTransfer => "Bank Transfer",
+            PaymentMethod.Cash => "Cash",
+            PaymentMethod.Stripe => "Stripe",
+            _ => "Unknown"
+        };
+
         public string FormattedPrice => Price.ToString("C");
         public string FormattedEventDate => EventDate.ToString("MMM dd, yyyy 'at' h:mm tt");
         public string FormattedPurchaseDate => PurchaseDate.ToString("MMM dd, yyyy 'at' h:mm tt");
-        
+
         public bool CanBeCancelled => Status == TicketStatus.Active && EventDate > DateTime.UtcNow.AddHours(24);
-        public bool CanBeRefunded => Status == TicketStatus.Active && EventDate > DateTime.UtcNow.AddDays(7);
+        public bool CanBeRefunded => Status == TicketStatus.Active && PaymentStatus == PaymentStatus.Completed && EventDate > DateTime.UtcNow.AddDays(7);
         public bool IsUpcoming => EventDate > DateTime.UtcNow;
     }
 }
