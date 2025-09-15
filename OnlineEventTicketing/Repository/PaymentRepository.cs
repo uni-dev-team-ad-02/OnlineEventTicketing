@@ -7,10 +7,12 @@ namespace OnlineEventTicketing.Repository
     public class PaymentRepository : IPaymentRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<PaymentRepository> _logger;
 
-        public PaymentRepository(ApplicationDbContext context)
+        public PaymentRepository(ApplicationDbContext context, ILogger<PaymentRepository> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<Payment>> GetAllPaymentsAsync()
@@ -34,14 +36,27 @@ namespace OnlineEventTicketing.Repository
         {
             try
             {
-                return await _context.Payments
+                _logger.LogDebug("Retrieving payment with ID {PaymentId}", id);
+                var payment = await _context.Payments
                     .Include(p => p.Ticket)
                     .ThenInclude(t => t.Event)
                     .Include(p => p.Customer)
                     .FirstOrDefaultAsync(p => p.Id == id);
+
+                if (payment == null)
+                {
+                    _logger.LogWarning("Payment with ID {PaymentId} not found", id);
+                }
+                else
+                {
+                    _logger.LogDebug("Successfully retrieved payment {PaymentId} for ticket {TicketId}", id, payment.TicketId);
+                }
+
+                return payment;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error retrieving payment with ID {PaymentId}", id);
                 return null;
             }
         }
@@ -101,13 +116,21 @@ namespace OnlineEventTicketing.Repository
         {
             try
             {
+                _logger.LogInformation("Creating new payment for ticket {TicketId}, customer {CustomerId}, amount {Amount:C}",
+                    payment.TicketId, payment.CustomerId, payment.Amount);
+
                 payment.TransactionId = GenerateTransactionId();
                 _context.Payments.Add(payment);
                 await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Successfully created payment {PaymentId} with transaction ID {TransactionId}",
+                    payment.Id, payment.TransactionId);
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error creating payment for ticket {TicketId}, customer {CustomerId}",
+                    payment.TicketId, payment.CustomerId);
                 return false;
             }
         }
@@ -131,18 +154,22 @@ namespace OnlineEventTicketing.Repository
         {
             try
             {
+                _logger.LogDebug("Updating payment {PaymentId} status to {Status}", paymentId, status);
                 var payment = await _context.Payments.FindAsync(paymentId);
                 if (payment != null)
                 {
                     payment.Status = status;
                     payment.UpdatedAt = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
+                    _logger.LogInformation("Successfully updated payment {PaymentId} status to {Status}", paymentId, status);
                     return true;
                 }
+                _logger.LogWarning("Payment {PaymentId} not found when updating status", paymentId);
                 return false;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error updating payment {PaymentId} status to {Status}", paymentId, status);
                 return false;
             }
         }

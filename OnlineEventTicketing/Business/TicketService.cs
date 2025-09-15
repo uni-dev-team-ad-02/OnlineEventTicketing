@@ -8,12 +8,14 @@ namespace OnlineEventTicketing.Business
         private readonly ITicketRepository _ticketRepository;
         private readonly IEventRepository _eventRepository;
         private readonly IPromotionRepository _promotionRepository;
+        private readonly ILogger<TicketService> _logger;
 
-        public TicketService(ITicketRepository ticketRepository, IEventRepository eventRepository, IPromotionRepository promotionRepository)
+        public TicketService(ITicketRepository ticketRepository, IEventRepository eventRepository, IPromotionRepository promotionRepository, ILogger<TicketService> logger)
         {
             _ticketRepository = ticketRepository;
             _eventRepository = eventRepository;
             _promotionRepository = promotionRepository;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<Ticket>> GetAllTicketsAsync()

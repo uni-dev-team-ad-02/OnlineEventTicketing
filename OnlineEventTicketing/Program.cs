@@ -4,8 +4,35 @@ using OnlineEventTicketing.Data;
 using OnlineEventTicketing.Data.Entity;
 using OnlineEventTicketing.Repository;
 using OnlineEventTicketing.Business;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog
+var loggerConfig = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .Enrich.WithEnvironmentName()
+    .Enrich.WithProcessId()
+    .Enrich.WithThreadId()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File(
+        path: "logs/app-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30,
+        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}");
+
+// Add Application Insights if instrumentation key is provided
+var instrumentationKey = builder.Configuration["ApplicationInsights:InstrumentationKey"];
+if (!string.IsNullOrEmpty(instrumentationKey) && instrumentationKey != "your-instrumentation-key-here")
+{
+    loggerConfig.WriteTo.ApplicationInsights(instrumentationKey, TelemetryConverter.Traces);
+}
+
+Log.Logger = loggerConfig.CreateLogger();
+
+// Use Serilog
+builder.Host.UseSerilog();
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -82,4 +109,16 @@ app.MapControllerRoute(
     
 app.MapRazorPages();
 
-app.Run();
+try
+{
+    Log.Information("Starting web application");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

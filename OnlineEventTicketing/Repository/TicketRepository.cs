@@ -7,10 +7,12 @@ namespace OnlineEventTicketing.Repository
     public class TicketRepository : ITicketRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<TicketRepository> _logger;
 
-        public TicketRepository(ApplicationDbContext context)
+        public TicketRepository(ApplicationDbContext context, ILogger<TicketRepository> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<Ticket>> GetAllTicketsAsync()
@@ -33,14 +35,27 @@ namespace OnlineEventTicketing.Repository
         {
             try
             {
-                return await _context.Tickets
+                _logger.LogDebug("Retrieving ticket with ID {TicketId}", id);
+                var ticket = await _context.Tickets
                     .Include(t => t.Event)
                     .Include(t => t.Customer)
                     .Include(t => t.Payments)
                     .FirstOrDefaultAsync(t => t.Id == id);
+
+                if (ticket == null)
+                {
+                    _logger.LogWarning("Ticket with ID {TicketId} not found", id);
+                }
+                else
+                {
+                    _logger.LogDebug("Successfully retrieved ticket {TicketId} for event {EventId}", id, ticket.EventId);
+                }
+
+                return ticket;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error retrieving ticket with ID {TicketId}", id);
                 return null;
             }
         }
@@ -98,13 +113,21 @@ namespace OnlineEventTicketing.Repository
         {
             try
             {
+                _logger.LogInformation("Creating new ticket for event {EventId}, customer {CustomerId}",
+                    ticket.EventId, ticket.CustomerId);
+
                 ticket.QrCode = GenerateQrCode();
                 _context.Tickets.Add(ticket);
                 await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Successfully created ticket {TicketId} with QR code {QrCode}",
+                    ticket.Id, ticket.QrCode);
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error creating ticket for event {EventId}, customer {CustomerId}",
+                    ticket.EventId, ticket.CustomerId);
                 return false;
             }
         }
@@ -128,18 +151,22 @@ namespace OnlineEventTicketing.Repository
         {
             try
             {
+                _logger.LogDebug("Updating ticket {TicketId} status to {Status}", ticketId, status);
                 var ticket = await _context.Tickets.FindAsync(ticketId);
                 if (ticket != null)
                 {
                     ticket.Status = status;
                     ticket.UpdatedAt = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
+                    _logger.LogInformation("Successfully updated ticket {TicketId} status to {Status}", ticketId, status);
                     return true;
                 }
+                _logger.LogWarning("Ticket {TicketId} not found when updating status", ticketId);
                 return false;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error updating ticket {TicketId} status to {Status}", ticketId, status);
                 return false;
             }
         }

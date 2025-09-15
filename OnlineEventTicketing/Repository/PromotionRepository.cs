@@ -7,10 +7,12 @@ namespace OnlineEventTicketing.Repository
     public class PromotionRepository : IPromotionRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<PromotionRepository> _logger;
 
-        public PromotionRepository(ApplicationDbContext context)
+        public PromotionRepository(ApplicationDbContext context, ILogger<PromotionRepository> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<Promotion>> GetAllPromotionsAsync()
@@ -93,12 +95,19 @@ namespace OnlineEventTicketing.Repository
         {
             try
             {
+                _logger.LogInformation("Creating new promotion {Code} for event {EventId} with {DiscountPercentage}% discount",
+                    promotion.Code, promotion.EventId, promotion.DiscountPercentage);
+
                 _context.Promotions.Add(promotion);
                 await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Successfully created promotion {PromotionId}: {Code}",
+                    promotion.Id, promotion.Code);
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error creating promotion {Code} for event {EventId}", promotion.Code, promotion.EventId);
                 return false;
             }
         }
@@ -142,17 +151,22 @@ namespace OnlineEventTicketing.Repository
         {
             try
             {
+                _logger.LogDebug("Validating promotion code {Code} for event {EventId}", code, eventId);
                 var currentDate = DateTime.UtcNow;
                 var promotion = await _context.Promotions
-                    .FirstOrDefaultAsync(p => p.Code == code && 
-                                            p.EventId == eventId && 
-                                            p.IsActive && 
-                                            p.StartDate <= currentDate && 
+                    .FirstOrDefaultAsync(p => p.Code == code &&
+                                            p.EventId == eventId &&
+                                            p.IsActive &&
+                                            p.StartDate <= currentDate &&
                                             p.EndDate >= currentDate);
-                return promotion != null;
+
+                var isValid = promotion != null;
+                _logger.LogInformation("Promotion code {Code} validation for event {EventId}: {IsValid}", code, eventId, isValid);
+                return isValid;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error validating promotion code {Code} for event {EventId}", code, eventId);
                 return false;
             }
         }

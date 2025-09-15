@@ -11,11 +11,13 @@ namespace OnlineEventTicketing.Controllers
     {
         private readonly IEventService _eventService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<EventsController> _logger;
 
-        public EventsController(IEventService eventService, UserManager<ApplicationUser> userManager)
+        public EventsController(IEventService eventService, UserManager<ApplicationUser> userManager, ILogger<EventsController> logger)
         {
             _eventService = eventService;
             _userManager = userManager;
+            _logger = logger;
         }
 
         // GET: Events
@@ -79,31 +81,42 @@ namespace OnlineEventTicketing.Controllers
         // GET: Events/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            var eventItem = await _eventService.GetEventByIdAsync(id);
-            if (eventItem == null)
+            try
             {
-                return NotFound();
+                _logger.LogDebug("Displaying event details for event {EventId}", id);
+                var eventItem = await _eventService.GetEventByIdAsync(id);
+                if (eventItem == null)
+                {
+                    _logger.LogWarning("Event {EventId} not found", id);
+                    return NotFound();
+                }
+
+                var viewModel = new EventDisplayViewModel
+                {
+                    Id = eventItem.Id,
+                    Title = eventItem.Title,
+                    Description = eventItem.Description,
+                    Date = eventItem.Date,
+                    Location = eventItem.Location,
+                    Category = eventItem.Category,
+                    Capacity = eventItem.Capacity,
+                    AvailableTickets = eventItem.AvailableTickets,
+                    BasePrice = eventItem.BasePrice,
+                    ImageUrl = eventItem.ImageUrl,
+                    IsActive = eventItem.IsActive,
+                    OrganizerId = eventItem.OrganizerId,
+                    OrganizerName = $"{eventItem.Organizer.FirstName} {eventItem.Organizer.LastName}",
+                    CreatedAt = eventItem.CreatedAt
+                };
+
+                _logger.LogInformation("Successfully displayed event details for {EventTitle} (ID: {EventId})", eventItem.Title, id);
+                return View(viewModel);
             }
-
-            var viewModel = new EventDisplayViewModel
+            catch (Exception ex)
             {
-                Id = eventItem.Id,
-                Title = eventItem.Title,
-                Description = eventItem.Description,
-                Date = eventItem.Date,
-                Location = eventItem.Location,
-                Category = eventItem.Category,
-                Capacity = eventItem.Capacity,
-                AvailableTickets = eventItem.AvailableTickets,
-                BasePrice = eventItem.BasePrice,
-                ImageUrl = eventItem.ImageUrl,
-                IsActive = eventItem.IsActive,
-                OrganizerId = eventItem.OrganizerId,
-                OrganizerName = $"{eventItem.Organizer.FirstName} {eventItem.Organizer.LastName}",
-                CreatedAt = eventItem.CreatedAt
-            };
-
-            return View(viewModel);
+                _logger.LogError(ex, "Error displaying event details for event {EventId}", id);
+                return StatusCode(500, "An error occurred while retrieving event details.");
+            }
         }
 
         // GET: Events/Create
@@ -119,41 +132,55 @@ namespace OnlineEventTicketing.Controllers
         [Authorize(Roles = "EventOrganizer")]
         public async Task<IActionResult> Create(CreateEventViewModel model)
         {
-            if (ModelState.IsValid)
+            try
             {
-                var user = await _userManager.GetUserAsync(User);
-                if (user == null)
+                if (ModelState.IsValid)
                 {
-                    return RedirectToAction("Login", "Account");
+                    var user = await _userManager.GetUserAsync(User);
+                    if (user == null)
+                    {
+                        _logger.LogWarning("User not found when creating event");
+                        return RedirectToAction("Login", "Account");
+                    }
+
+                    _logger.LogInformation("Creating new event {EventTitle} by organizer {OrganizerId}", model.Title, user.Id);
+
+                    var eventItem = new Event
+                    {
+                        Title = model.Title,
+                        Description = model.Description,
+                        Date = model.Date,
+                        Location = model.Location,
+                        Category = model.Category,
+                        Capacity = model.Capacity,
+                        BasePrice = model.BasePrice,
+                        ImageUrl = model.ImageUrl,
+                        IsActive = model.IsActive,
+                        OrganizerId = user.Id
+                    };
+
+                    var success = await _eventService.CreateEventAsync(eventItem);
+                    if (success)
+                    {
+                        _logger.LogInformation("Successfully created event {EventTitle} (ID: {EventId})", model.Title, eventItem.Id);
+                        TempData["Success"] = "Event created successfully!";
+                        return RedirectToAction(nameof(MyEvents));
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Failed to create event {EventTitle}", model.Title);
+                        ModelState.AddModelError("", "Failed to create event. Please try again.");
+                    }
                 }
 
-                var eventItem = new Event
-                {
-                    Title = model.Title,
-                    Description = model.Description,
-                    Date = model.Date,
-                    Location = model.Location,
-                    Category = model.Category,
-                    Capacity = model.Capacity,
-                    BasePrice = model.BasePrice,
-                    ImageUrl = model.ImageUrl,
-                    IsActive = model.IsActive,
-                    OrganizerId = user.Id
-                };
-
-                var success = await _eventService.CreateEventAsync(eventItem);
-                if (success)
-                {
-                    TempData["Success"] = "Event created successfully!";
-                    return RedirectToAction(nameof(MyEvents));
-                }
-                else
-                {
-                    ModelState.AddModelError("", "Failed to create event. Please try again.");
-                }
+                return View(model);
             }
-
-            return View(model);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating event {EventTitle}", model.Title);
+                ModelState.AddModelError("", "An error occurred while creating the event. Please try again.");
+                return View(model);
+            }
         }
 
         // GET: Events/Edit/5

@@ -7,16 +7,29 @@ namespace OnlineEventTicketing.Business
     {
         private readonly IEventRepository _eventRepository;
         private readonly IPromotionRepository _promotionRepository;
+        private readonly ILogger<EventService> _logger;
 
-        public EventService(IEventRepository eventRepository, IPromotionRepository promotionRepository)
+        public EventService(IEventRepository eventRepository, IPromotionRepository promotionRepository, ILogger<EventService> logger)
         {
             _eventRepository = eventRepository;
             _promotionRepository = promotionRepository;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<Event>> GetAllEventsAsync()
         {
-            return await _eventRepository.GetAllEventsAsync();
+            try
+            {
+                _logger.LogDebug("Retrieving all active events");
+                var events = await _eventRepository.GetAllEventsAsync();
+                _logger.LogInformation("Successfully retrieved {EventCount} active events", events.Count());
+                return events;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving all events");
+                throw;
+            }
         }
 
         public async Task<IEnumerable<Event>> GetAllEventsIncludingInactiveAsync()
@@ -46,7 +59,30 @@ namespace OnlineEventTicketing.Business
 
         public async Task<bool> CreateEventAsync(Event eventItem)
         {
-            return await _eventRepository.CreateEventAsync(eventItem);
+            try
+            {
+                _logger.LogInformation("Creating new event: {EventTitle} by organizer {OrganizerId}",
+                    eventItem.Title, eventItem.OrganizerId);
+
+                var result = await _eventRepository.CreateEventAsync(eventItem);
+
+                if (result)
+                {
+                    _logger.LogInformation("Successfully created event {EventId}: {EventTitle}",
+                        eventItem.Id, eventItem.Title);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to create event: {EventTitle}", eventItem.Title);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating event: {EventTitle}", eventItem.Title);
+                throw;
+            }
         }
 
         public async Task<bool> UpdateEventAsync(Event eventItem)

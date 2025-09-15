@@ -9,14 +9,16 @@ namespace OnlineEventTicketing.Business
         private readonly ITicketRepository _ticketRepository;
         private readonly IStripeService _stripeService;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<PaymentService> _logger;
 
         public PaymentService(IPaymentRepository paymentRepository, ITicketRepository ticketRepository,
-            IStripeService stripeService, IConfiguration configuration)
+            IStripeService stripeService, IConfiguration configuration, ILogger<PaymentService> logger)
         {
             _paymentRepository = paymentRepository;
             _ticketRepository = ticketRepository;
             _stripeService = stripeService;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<Payment>> GetAllPaymentsAsync()
@@ -41,31 +43,53 @@ namespace OnlineEventTicketing.Business
 
         public async Task<Payment?> ProcessPaymentAsync(int ticketId, string customerId, PaymentMethod paymentMethod, decimal amount)
         {
-            // Validate ticket exists
-            var ticket = await _ticketRepository.GetTicketByIdAsync(ticketId);
-            if (ticket == null) return null;
-
-            // Create payment record
-            var payment = new Payment
+            try
             {
-                TicketId = ticketId,
-                CustomerId = customerId,
-                Amount = amount,
-                PaymentMethod = paymentMethod,
-                Status = PaymentStatus.Pending,
-                PaymentDate = DateTime.UtcNow,
-                TransactionId = Guid.NewGuid().ToString()
-            };
+                _logger.LogInformation("Processing payment for ticket {TicketId}, customer {CustomerId}, method {PaymentMethod}, amount {Amount:C}",
+                    ticketId, customerId, paymentMethod, amount);
 
-            var success = await _paymentRepository.CreatePaymentAsync(payment);
-            if (!success) return null;
+                // Validate ticket exists
+                var ticket = await _ticketRepository.GetTicketByIdAsync(ticketId);
+                if (ticket == null)
+                {
+                    _logger.LogWarning("Payment failed: Ticket {TicketId} not found", ticketId);
+                    return null;
+                }
 
-            // All payments are Stripe-based and start as pending until webhook confirms
-            payment.Status = PaymentStatus.Pending;
+                // Create payment record
+                var payment = new Payment
+                {
+                    TicketId = ticketId,
+                    CustomerId = customerId,
+                    Amount = amount,
+                    PaymentMethod = paymentMethod,
+                    Status = PaymentStatus.Pending,
+                    PaymentDate = DateTime.UtcNow,
+                    TransactionId = Guid.NewGuid().ToString()
+                };
 
-            await _paymentRepository.UpdatePaymentAsync(payment);
+                var success = await _paymentRepository.CreatePaymentAsync(payment);
+                if (!success)
+                {
+                    _logger.LogError("Failed to create payment record for ticket {TicketId}", ticketId);
+                    return null;
+                }
 
-            return payment;
+                // All payments are Stripe-based and start as pending until webhook confirms
+                payment.Status = PaymentStatus.Pending;
+                await _paymentRepository.UpdatePaymentAsync(payment);
+
+                _logger.LogInformation("Successfully created payment {PaymentId} for ticket {TicketId}",
+                    payment.Id, ticketId);
+
+                return payment;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing payment for ticket {TicketId}, customer {CustomerId}",
+                    ticketId, customerId);
+                throw;
+            }
         }
 
         public async Task<bool> UpdatePaymentStatusAsync(int paymentId, PaymentStatus status)
