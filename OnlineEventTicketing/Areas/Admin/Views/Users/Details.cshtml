@@ -1,0 +1,288 @@
+@model OnlineEventTicketing.Models.ViewModels.UserDisplayViewModel
+@{
+    ViewData["Title"] = "User Details";
+}
+
+<div class="container-fluid fade-in">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="dashboard-title mb-1">
+                        User Details
+                    </h1>
+                    <p class="dashboard-subtitle mb-0">Comprehensive view of user information and activity</p>
+                </div>
+                <div>
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-success-custom btn-lg me-2">
+                        <i class="bi bi-pencil-fill me-2"></i>Edit User
+                    </a>
+                    <a asp-action="Index" class="btn btn-primary-custom btn-lg">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Users
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- User Profile Card -->
+        <div class="col-lg-4 mb-4">
+            <div class="card form-card h-100">
+                <div class="card-body text-center">
+                    <div class="avatar-initial rounded-circle bg-primary text-white mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; font-size: 2rem;">
+                        @Model.FirstName.FirstOrDefault()@Model.LastName.FirstOrDefault()
+                    </div>
+                    <h4 class="card-title">@Model.FullName</h4>
+                    <p class="text-muted mb-3">@Model.Email</p>
+                    
+                    <!-- Status Badge -->
+                    <div class="mb-3">
+                        <span class="badge @Model.StatusBadgeClass fs-6">@Model.StatusDisplayName</span>
+                    </div>
+                    
+                    <!-- Roles -->
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">Roles</h6>
+                        @if (Model.Roles.Any())
+                        {
+                            @foreach (var role in Model.Roles)
+                            {
+                                <span class="badge @Model.PrimaryRoleBadgeClass me-1 mb-1">@role</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">No roles assigned</span>
+                        }
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn @(Model.IsActive ? "btn-outline-warning" : "btn-outline-success")" 
+                                data-bs-toggle="modal" data-bs-target="#statusModal">
+                            <i class="bi bi-@(Model.IsActive ? "lock-fill" : "unlock-fill")"></i> 
+                            @(Model.IsActive ? "Deactivate" : "Activate") User
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" 
+                                data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash-fill"></i> Delete User
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Information -->
+        <div class="col-lg-8 mb-4">
+            <div class="card form-card h-100">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">
+                        User Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Personal Details -->
+                        <div class="col-md-6 mb-4">
+                            <h6 class="section-title mb-3">Personal Details</h6>
+                            <table class="table table-professional table-borderless">
+                                <tr>
+                                    <td class="text-muted">User ID:</td>
+                                    <td><code>@Model.Id</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">First Name:</td>
+                                    <td>@Model.FirstName</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Last Name:</td>
+                                    <td>@Model.LastName</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Email:</td>
+                                    <td>
+                                        @Model.Email
+                                        @if (Model.EmailConfirmed)
+                                        {
+                                            <i class="bi bi-check-circle-fill text-success ms-1" title="Email Verified"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-exclamation-triangle-fill text-warning ms-1" title="Email Not Verified"></i>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Phone:</td>
+                                    <td>@(string.IsNullOrEmpty(Model.PhoneNumber) ? "Not provided" : Model.PhoneNumber)</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Loyalty Points:</td>
+                                    <td><span class="badge bg-warning text-dark">@Model.LoyaltyPoints pts</span></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- Account Details -->
+                        <div class="col-md-6 mb-4">
+                            <h6 class="section-title mb-3">Account Details</h6>
+                            <table class="table table-professional table-borderless">
+                                <tr>
+                                    <td class="text-muted">Registration Date:</td>
+                                    <td>@Model.FormattedRegistrationDate</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Account Age:</td>
+                                    <td>@((DateTime.Now - Model.RegistrationDate).Days) days</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Status:</td>
+                                    <td><span class="badge @Model.StatusBadgeClass">@Model.StatusDisplayName</span></td>
+                                </tr>
+                                @if (Model.LockoutEnd.HasValue && Model.LockoutEnd > DateTimeOffset.Now)
+                                {
+                                    <tr>
+                                        <td class="text-muted">Locked Until:</td>
+                                        <td class="text-danger">@Model.LockoutEnd.Value.ToString("MMM dd, yyyy HH:mm")</td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <td class="text-muted">Email Confirmed:</td>
+                                    <td>
+                                        @if (Model.EmailConfirmed)
+                                        {
+                                            <span class="text-success"><i class="bi bi-check-circle-fill"></i> Yes</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-warning"><i class="bi bi-x-circle-fill"></i> No</span>
+                                        }
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Statistics -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card analytics-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">
+                        Activity Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card stat-card stat-card-info">
+                                <div class="card-body text-center">
+                                    <div class="stat-icon stat-icon-info mb-3">
+                                        <i class="bi bi-ticket-perforated-fill"></i>
+                                    </div>
+                                    <h3 class="stat-number text-info-custom">@Model.TotalTicketsPurchased</h3>
+                                    <p class="stat-label mb-0">Total Tickets</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card stat-card stat-card-success">
+                                <div class="card-body text-center">
+                                    <div class="stat-icon stat-icon-success mb-3">
+                                        <i class="bi bi-currency-dollar"></i>
+                                    </div>
+                                    <h3 class="stat-number text-success-custom">@Model.FormattedTotalAmountSpent</h3>
+                                    <p class="stat-label mb-0">Total Spent</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card stat-card stat-card-warning">
+                                <div class="card-body text-center">
+                                    <div class="stat-icon stat-icon-warning mb-3">
+                                        <i class="bi bi-star-fill"></i>
+                                    </div>
+                                    <h3 class="stat-number text-warning-custom">@Model.LoyaltyPoints</h3>
+                                    <p class="stat-label mb-0">Loyalty Points</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card stat-card stat-card-primary">
+                                <div class="card-body text-center">
+                                    <div class="stat-icon stat-icon-primary mb-3">
+                                        <i class="bi bi-calendar-fill"></i>
+                                    </div>
+                                    <h3 class="stat-number text-primary-custom">@((DateTime.Now - Model.RegistrationDate).Days)</h3>
+                                    <p class="stat-label mb-0">Days Active</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Toggle Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@(Model.IsActive ? "Deactivate" : "Activate") User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to @(Model.IsActive ? "deactivate" : "activate") <strong>@Model.FullName</strong>?</p>
+                @if (Model.IsActive)
+                {
+                    <p class="text-warning">This will prevent the user from logging in.</p>
+                }
+                else
+                {
+                    <p class="text-success">This will allow the user to log in again.</p>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form asp-action="ToggleStatus" asp-route-id="@Model.Id" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn @(Model.IsActive ? "btn-warning" : "btn-success")">
+                        @(Model.IsActive ? "Deactivate" : "Activate")
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to permanently delete <strong>@Model.FullName</strong>?</p>
+                <p class="text-danger">This action cannot be undone. All user data will be lost.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Delete User</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

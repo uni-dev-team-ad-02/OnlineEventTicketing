@@ -1,0 +1,433 @@
+@model OnlineEventTicketing.Models.ViewModels.AdminUsersReportViewModel
+@{
+    ViewData["Title"] = "Admin Users Report";
+}
+
+<div class="container-fluid fade-in">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="dashboard-title mb-1">
+                        Users Report
+                    </h1>
+                    <p class="dashboard-subtitle mb-0">@Model.FormattedReportPeriod</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <form asp-action="ExportUsersReport" method="post" class="d-inline">
+                        <input type="hidden" name="startDate" value="@Model.StartDate.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="endDate" value="@Model.EndDate.ToString("yyyy-MM-dd")" />
+                        <button type="submit" class="btn btn-success-custom">
+                            <i class="bi bi-download me-2"></i>Export CSV
+                        </button>
+                    </form>
+                    <a asp-action="Index" class="btn btn-primary-custom">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-3 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon stat-icon-primary me-3">
+                            <i class="bi bi-people text-primary"></i>
+                        </div>
+                        <div>
+                            <h3 class="stat-number text-primary-custom mb-0">@Model.TotalUsers.ToString("N0")</h3>
+                            <p class="stat-label mb-0">Total Users</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon stat-icon-success me-3">
+                            <i class="bi bi-person-check text-success"></i>
+                        </div>
+                        <div>
+                            <h3 class="stat-number text-success-custom mb-0">@Model.ActiveUsers.ToString("N0")</h3>
+                            <p class="stat-label mb-0">Active Users</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon stat-icon-info me-3">
+                            <i class="bi bi-person-plus text-info"></i>
+                        </div>
+                        <div>
+                            <h3 class="stat-number text-info-custom mb-0">@Model.NewUsersThisMonth.ToString("N0")</h3>
+                            <p class="stat-label mb-0">New This Month</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon stat-icon-warning me-3">
+                            <i class="bi bi-percent text-warning"></i>
+                        </div>
+                        <div>
+                            <h3 class="stat-number text-warning-custom mb-0">@Model.FormattedActiveUsersPercentage</h3>
+                            <p class="stat-label mb-0">Active Rate</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Distribution Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-4 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-success mb-3">
+                        <i class="bi bi-person-heart text-success"></i>
+                    </div>
+                    <h4 class="text-success">@Model.TotalCustomers</h4>
+                    <p class="text-muted mb-0">Customers</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-primary mb-3">
+                        <i class="bi bi-person-workspace text-primary"></i>
+                    </div>
+                    <h4 class="text-primary">@Model.TotalOrganizers</h4>
+                    <p class="text-muted mb-0">Organizers</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-warning mb-3">
+                        <i class="bi bi-person-gear text-danger"></i>
+                    </div>
+                    <h4 class="text-danger">@Model.TotalAdmins</h4>
+                    <p class="text-muted mb-0">Admins</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registration Trends Chart -->
+    @if (Model.RegistrationTrends.Any())
+    {
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card analytics-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">
+                            User Registration Trends
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="registrationTrendsChart" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Role Distribution Chart -->
+    @if (Model.RoleDistribution.Any())
+    {
+        <div class="row mb-5">
+            <div class="col-lg-6">
+                <div class="card analytics-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">
+                            Role Distribution
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="roleDistributionChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card analytics-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">
+                            Role Breakdown
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var role in Model.RoleDistribution)
+                        {
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge @role.BadgeClass me-2">@role.Role</span>
+                                    <span>@role.Count users</span>
+                                </div>
+                                <span class="text-muted">@role.FormattedPercentage</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Top Customers -->
+    @if (Model.TopCustomers.Any())
+    {
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card analytics-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">
+                            Top Customers
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-professional table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Customer</th>
+                                        <th>Email</th>
+                                        <th>Tickets Purchased</th>
+                                        <th>Total Spent</th>
+                                        <th>Loyalty Points</th>
+                                        <th>Registration Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var customer in Model.TopCustomers)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@customer.UserName</strong>
+                                            </td>
+                                            <td>@customer.Email</td>
+                                            <td>
+                                                <span class="badge bg-primary">@customer.TicketsPurchased</span>
+                                            </td>
+                                            <td>
+                                                <strong class="text-success">@customer.FormattedTotalSpent</strong>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-warning text-dark">@customer.LoyaltyPoints</span>
+                                            </td>
+                                            <td>@customer.FormattedRegistrationDate</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Top Organizers -->
+    @if (Model.TopOrganizers.Any())
+    {
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card analytics-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">
+                            Top Organizers
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-professional table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Organizer</th>
+                                        <th>Email</th>
+                                        <th>Events Created</th>
+                                        <th>Tickets Sold</th>
+                                        <th>Total Revenue</th>
+                                        <th>Registration Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var organizer in Model.TopOrganizers)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@organizer.UserName</strong>
+                                            </td>
+                                            <td>@organizer.Email</td>
+                                            <td>
+                                                <span class="badge bg-info">@organizer.EventsCreated</span>
+                                            </td>
+                                            <td>@organizer.TicketsSold.ToString("N0")</td>
+                                            <td>
+                                                <strong class="text-success">@organizer.FormattedTotalRevenue</strong>
+                                            </td>
+                                            <td>@organizer.FormattedRegistrationDate</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Recent Users -->
+    @if (Model.RecentUsers.Any())
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card analytics-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">
+                            Recent Users
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-professional table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Registration Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in Model.RecentUsers)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@user.UserName</strong>
+                                            </td>
+                                            <td>@user.Email</td>
+                                            <td>
+                                                <span class="badge @user.RoleBadgeClass">@user.Role</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge @user.StatusBadgeClass">@user.StatusDisplayName</span>
+                                            </td>
+                                            <td>@user.FormattedRegistrationDate</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Registration Trends Chart
+        @if (Model.RegistrationTrends.Any())
+        {
+            <text>
+            const registrationTrendsCtx = document.getElementById('registrationTrendsChart').getContext('2d');
+            new Chart(registrationTrendsCtx, {
+                type: 'line',
+                data: {
+                    labels: [@Html.Raw(string.Join(",", Model.RegistrationTrends.Select(r => $"'{r.Period}'")))],
+                    datasets: [{
+                        label: 'New Users',
+                        data: [@string.Join(",", Model.RegistrationTrends.Select(r => r.NewUsers))],
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Total Users',
+                        data: [@string.Join(",", Model.RegistrationTrends.Select(r => r.TotalUsers))],
+                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        borderColor: 'rgba(25, 135, 84, 1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            </text>
+        }
+
+        // Role Distribution Chart
+        @if (Model.RoleDistribution.Any())
+        {
+            <text>
+            const roleDistributionCtx = document.getElementById('roleDistributionChart').getContext('2d');
+            new Chart(roleDistributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [@Html.Raw(string.Join(",", Model.RoleDistribution.Select(r => $"'{r.Role}'")))],
+                    datasets: [{
+                        data: [@string.Join(",", Model.RoleDistribution.Select(r => r.Count))],
+                        backgroundColor: [
+                            'rgba(25, 135, 84, 0.8)',    // Success - Customer
+                            'rgba(13, 110, 253, 0.8)',   // Primary - EventOrganizer
+                            'rgba(220, 53, 69, 0.8)',    // Danger - Admin
+                            'rgba(108, 117, 125, 0.8)'   // Secondary - Other
+                        ],
+                        borderColor: [
+                            'rgba(25, 135, 84, 1)',
+                            'rgba(13, 110, 253, 1)',
+                            'rgba(220, 53, 69, 1)',
+                            'rgba(108, 117, 125, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            </text>
+        }
+    </script>
+}
+

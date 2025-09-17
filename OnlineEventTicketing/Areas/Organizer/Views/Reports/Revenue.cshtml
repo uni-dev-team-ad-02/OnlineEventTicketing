@@ -1,0 +1,276 @@
+@model OnlineEventTicketing.Models.ViewModels.OrganizerRevenueReportViewModel
+@{
+    ViewData["Title"] = "Revenue Report";
+}
+
+<div class="container-fluid fade-in">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="dashboard-title mb-1">Revenue Report</h1>
+                    <p class="dashboard-subtitle mb-0">@Model.FormattedReportPeriod</p>
+                </div>
+                <div>
+                    <button class="btn btn-success-custom btn-lg me-2" onclick="exportReport()">
+                        <i class="bi bi-download me-2"></i>Export CSV
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card form-card">
+                <div class="card-body">
+                    <form asp-action="Revenue" method="get" class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" name="startDate" value="@ViewBag.StartDate?.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-4">
+                            <label for="endDate" class="form-label">End Date</label>
+                            <input type="date" class="form-control" name="endDate" value="@ViewBag.EndDate?.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary-custom">
+                                <i class="bi bi-funnel-fill me-2"></i>Update Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4 slide-up">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-success mb-3">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <h3 class="stat-number text-success-custom">@Model.FormattedTotalRevenue</h3>
+                    <p class="stat-label mb-0">Total Revenue</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-primary mb-3">
+                        <i class="bi bi-ticket-perforated-fill"></i>
+                    </div>
+                    <h3 class="stat-number text-primary-custom">@Model.TotalTicketsSold</h3>
+                    <p class="stat-label mb-0">Tickets Sold</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-info mb-3">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <h3 class="stat-number text-info-custom">@Model.FormattedAverageRevenuePerEvent</h3>
+                    <p class="stat-label mb-0">Avg Revenue/Event</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-warning mb-3">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                    <h3 class="stat-number text-warning-custom">@Model.FormattedAverageTicketPrice</h3>
+                    <p class="stat-label mb-0">Avg Ticket Price</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Monthly Revenue Chart -->
+        @if (Model.MonthlyBreakdown.Any())
+        {
+            <div class="col-lg-8 mb-4">
+                <div class="card analytics-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">Monthly Revenue Trend</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="revenueChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Category Performance -->
+        @if (Model.CategoryPerformance.Any())
+        {
+            <div class="col-lg-4 mb-4">
+                <div class="card analytics-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">Performance by Category</h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var category in Model.CategoryPerformance.Take(5))
+                        {
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">@category.Category</span>
+                                    <span class="text-success">@category.FormattedRevenue</span>
+                                </div>
+                                <div class="progress mt-1" style="height: 8px;">
+                                    @{
+                                        var maxRevenue = Model.CategoryPerformance.Max(c => c.Revenue);
+                                        var percentage = maxRevenue > 0 ? (category.Revenue / maxRevenue * 100) : 0;
+                                    }
+                                    <div class="progress-bar bg-success" style="width: @percentage%"></div>
+                                </div>
+                                <small class="text-muted">@category.EventsCount events • @category.TicketsSold tickets</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Event Revenue Breakdown -->
+    @if (Model.EventBreakdown.Any())
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card events-table-card">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="section-title mb-0">Event Revenue Breakdown</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-professional">
+                                    <tr>
+                                        <th>Event</th>
+                                        <th>Date</th>
+                                        <th>Revenue</th>
+                                        <th>Tickets Sold</th>
+                                        <th>Capacity</th>
+                                        <th>Sell-through</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var eventItem in Model.EventBreakdown)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold">@eventItem.EventTitle</div>
+                                            </td>
+                                            <td>@eventItem.FormattedEventDate</td>
+                                            <td>
+                                                <span class="fw-bold text-success">@eventItem.FormattedRevenue</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">@eventItem.TicketsSold</span>
+                                            </td>
+                                            <td>@eventItem.Capacity</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="me-2">@eventItem.FormattedSellThroughRate</span>
+                                                    <div class="progress flex-grow-1" style="height: 8px; width: 60px;">
+                                                        <div class="progress-bar @(eventItem.SellThroughRate >= 75 ? "bg-success" : eventItem.SellThroughRate >= 50 ? "bg-warning" : "bg-danger")" 
+                                                             style="width: @eventItem.SellThroughRate%"></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card analytics-card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-graph-down text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="text-muted mt-3">No Revenue Data</h4>
+                        <p class="text-muted">No revenue data found for the selected period.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Export Form -->
+<form id="exportForm" asp-action="ExportRevenue" method="post" style="display: none;">
+    <input type="hidden" name="startDate" value="@ViewBag.StartDate?.ToString("yyyy-MM-dd")" />
+    <input type="hidden" name="endDate" value="@ViewBag.EndDate?.ToString("yyyy-MM-dd")" />
+    <input type="hidden" name="format" value="csv" />
+</form>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        function exportReport() {
+            document.getElementById('exportForm').submit();
+        }
+
+        // Revenue Chart
+        @if (Model.MonthlyBreakdown.Any())
+        {
+            <text>
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            const revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [@Html.Raw(string.Join(",", Model.MonthlyBreakdown.Select(m => $"'{m.Month}'")))],
+                    datasets: [{
+                        label: 'Revenue',
+                        data: [@string.Join(",", Model.MonthlyBreakdown.Select(m => m.Revenue))],
+                        borderColor: 'rgb(40, 167, 69)',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            </text>
+        }
+    </script>
+}
+

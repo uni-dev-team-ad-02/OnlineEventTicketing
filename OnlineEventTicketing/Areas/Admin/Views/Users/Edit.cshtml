@@ -1,0 +1,180 @@
+@model OnlineEventTicketing.Models.ViewModels.EditUserViewModel
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<div class="container-fluid fade-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="row mb-5">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="dashboard-title mb-1">
+                                Edit User
+                            </h1>
+                            <p class="dashboard-subtitle mb-0">Update user information and roles</p>
+                        </div>
+                        <a asp-action="Index" class="btn btn-primary-custom">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Users
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Form -->
+            <div class="card form-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">
+                        User Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <input asp-for="Id" type="hidden" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <!-- User Details -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="section-title mb-3">
+                                    Personal Information
+                                </h6>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FirstName" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                    <input asp-for="FirstName" class="form-control" />
+                                </div>
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LastName" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                    <input asp-for="LastName" class="form-control" />
+                                </div>
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Email" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
+                                    <input asp-for="Email" class="form-control" readonly />
+                                </div>
+                                <div class="form-text">Email cannot be changed.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PhoneNumber" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
+                                    <input asp-for="PhoneNumber" class="form-control" />
+                                </div>
+                                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LoyaltyPoints" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-star-fill"></i></span>
+                                    <input asp-for="LoyaltyPoints" class="form-control" type="number" min="0" />
+                                </div>
+                                <span asp-validation-for="LoyaltyPoints" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <!-- Role Management -->
+                        <div class="row mt-4 mb-4">
+                            <div class="col-12">
+                                <h6 class="section-title mb-3">
+                                    Role Management
+                                </h6>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Current Roles</label>
+                                <div class="mb-2">
+                                    @if (Model.CurrentRoles.Any())
+                                    {
+                                        @foreach (var role in Model.CurrentRoles)
+                                        {
+                                            <span class="badge bg-primary me-1">@role</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No roles assigned</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Assign Roles</label>
+                                @foreach (var role in Model.AvailableRoles)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="SelectedRoles" value="@role" 
+                                               @(Model.CurrentRoles.Contains(role) ? "checked" : "") id="role-@role" />
+                                        <label class="form-check-label" for="role-@role">
+                                            @role
+                                            @switch (role)
+                                            {
+                                                case "Admin":
+                                                    <small class="text-muted">(Full system access)</small>
+                                                    break;
+                                                case "EventOrganizer":
+                                                    <small class="text-muted">(Can create and manage events)</small>
+                                                    break;
+                                                case "Customer":
+                                                    <small class="text-muted">(Can purchase tickets)</small>
+                                                    break;
+                                            }
+                                        </label>
+                                    </div>
+                                }
+                                <div class="form-text">Select the roles to assign to this user.</div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <a asp-action="Index" class="btn btn-outline-secondary btn-lg me-2">
+                                            <i class="bi bi-x-circle me-2"></i>Cancel
+                                        </a>
+                                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-info btn-lg">
+                                            <i class="bi bi-eye-fill me-2"></i>View Details
+                                        </a>
+                                    </div>
+                                    <button type="submit" class="btn btn-success-custom btn-lg">
+                                        <i class="bi bi-check-circle-fill me-2"></i>Update User
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

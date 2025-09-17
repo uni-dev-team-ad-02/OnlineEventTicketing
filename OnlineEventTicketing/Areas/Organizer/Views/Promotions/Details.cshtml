@@ -1,0 +1,240 @@
+@model OnlineEventTicketing.Models.ViewModels.PromotionDisplayViewModel
+@{
+    ViewData["Title"] = "Promotion Details";
+}
+
+<div class="container fade-in">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="dashboard-title mb-1">Promotion Details</h1>
+                    <p class="dashboard-subtitle mb-0">Complete information about your promotional code</p>
+                </div>
+                <div>
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary-custom btn-lg me-2">
+                        <i class="bi bi-pencil-fill me-2"></i>Edit Promotion
+                    </a>
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Promotions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Promotion Details Card -->
+        <div class="col-lg-8 mb-4">
+            <div class="card form-card h-100">
+                <div class="card-header border-0 bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="section-title mb-0">Promotion Information</h5>
+                    <span class="badge @Model.StatusBadgeClass fs-6">@Model.StatusDisplayName</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-md-6 mb-4">
+                            <h6 class="text-primary-custom mb-3">
+                                <i class="bi bi-tag-fill me-2"></i>Promotion Details
+                            </h6>
+                            <table class="table table-professional table-borderless">
+                                <tr>
+                                    <td class="text-muted fw-bold">Promotion Code:</td>
+                                    <td>
+                                        <span class="badge bg-primary fs-6 font-monospace">@Model.Code</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted fw-bold">Discount:</td>
+                                    <td>
+                                        <span class="badge bg-success fs-6">@Model.FormattedDiscountPercentage</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted fw-bold">Description:</td>
+                                    <td>@(string.IsNullOrEmpty(Model.Description) ? "No description provided" : Model.Description)</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted fw-bold">Status:</td>
+                                    <td>
+                                        <span class="badge @Model.StatusBadgeClass">@Model.StatusDisplayName</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- Validity Period -->
+                        <div class="col-md-6 mb-4">
+                            <h6 class="text-primary-custom mb-3">
+                                <i class="bi bi-calendar-range-fill me-2"></i>Validity Period
+                            </h6>
+                            <table class="table table-professional table-borderless">
+                                <tr>
+                                    <td class="text-muted fw-bold">Start Date:</td>
+                                    <td>@Model.FormattedStartDate</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted fw-bold">End Date:</td>
+                                    <td>@Model.FormattedEndDate</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted fw-bold">Duration:</td>
+                                    <td>@Model.FormattedDuration</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted fw-bold">Time Remaining:</td>
+                                    <td>
+                                        <span class="badge @(Model.DaysRemaining > 0 ? "bg-info" : "bg-secondary")">
+                                            @Model.FormattedDaysRemaining
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Event Information -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="text-primary-custom mb-3">
+                                <i class="bi bi-calendar-event-fill me-2"></i>Associated Event
+                            </h6>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <h5 class="card-title text-primary-custom mb-2">@Model.EventTitle</h5>
+                                            <div class="d-flex flex-wrap gap-3">
+                                                <span class="text-muted">
+                                                    <i class="bi bi-calendar-fill"></i> @Model.FormattedEventDate
+                                                </span>
+                                                <span class="text-muted">
+                                                    <i class="bi bi-geo-alt-fill"></i> @Model.EventLocation
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 text-end">
+                                            <a asp-area="" asp-controller="Events" asp-action="Details" asp-route-id="@Model.EventId" class="btn btn-primary-custom">
+                                                <i class="bi bi-eye-fill me-2"></i>View Event
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Panel -->
+        <div class="col-lg-4 mb-4">
+            <div class="card analytics-card h-100">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary-custom btn-lg">
+                            <i class="bi bi-pencil-fill me-2"></i>Edit Promotion
+                        </a>
+                        
+                        <button type="button" class="btn @(Model.IsActive ? "btn-warning-custom" : "btn-success-custom") btn-lg"
+                                data-bs-toggle="modal" data-bs-target="#statusModal">
+                            <i class="bi bi-@(Model.IsActive ? "pause-circle-fill" : "play-circle-fill") me-2"></i>@(Model.IsActive ? "Deactivate" : "Activate")
+                        </button>
+                        
+                        <button type="button" class="btn btn-danger-custom btn-lg"
+                                data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash-fill me-2"></i>Delete Promotion
+                        </button>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Quick Stats -->
+                    <div class="text-center">
+                        <h6 class="text-muted mb-3">Quick Stats</h6>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border rounded p-2">
+                                    <div class="h5 text-primary-custom mb-0">@Model.Id</div>
+                                    <small class="text-muted">Promotion ID</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded p-2">
+                                    <div class="h5 text-success-custom mb-0">@Model.FormattedDiscountPercentage</div>
+                                    <small class="text-muted">Discount</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Toggle Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@(Model.IsActive ? "Deactivate" : "Activate") Promotion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to @(Model.IsActive ? "deactivate" : "activate") the promotion <strong>@Model.Code</strong>?</p>
+                @if (Model.IsActive)
+                {
+                    <p class="text-warning">This will make the promotion unusable by customers.</p>
+                }
+                else
+                {
+                    <p class="text-success">This will make the promotion available for customers to use.</p>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form asp-action="ToggleStatus" asp-route-id="@Model.Id" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn @(Model.IsActive ? "btn-warning-custom" : "btn-success-custom")">
+                        @(Model.IsActive ? "Deactivate" : "Activate")
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Promotion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the promotion <strong>@Model.Code</strong>?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger-custom">Delete Promotion</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.font-monospace {
+    font-family: 'Courier New', Courier, monospace !important;
+}
+</style>

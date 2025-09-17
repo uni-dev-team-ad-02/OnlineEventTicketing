@@ -1,0 +1,198 @@
+@{
+    ViewData["Title"] = "Admin Reports";
+}
+
+<div class="container-fluid fade-in">
+    <div class="row">
+        <div class="col-12">
+    <!-- Header -->
+    <div class="row mb-5">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="gradient-text mb-2">
+                                <i class="bi bi-graph-up-arrow"></i> Admin Reports
+                            </h1>
+                            <p class="text-muted fs-5">Comprehensive analytics and reporting dashboard</p>
+                        </div>
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn btn-danger btn-lg shadow-custom">
+                            <i class="bi bi-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Cards -->
+            <div class="row g-4">
+                <!-- Sales Reports Card -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card shadow-custom rounded-custom h-100 hover-lift">
+                        <div class="card-body text-center">
+                            <div class="report-icon mb-3">
+                                <i class="bi bi-currency-dollar text-success" style="font-size: 3rem;"></i>
+                            </div>
+                            <h4 class="card-title text-primary mb-3">Sales Reports</h4>
+                            <p class="card-text text-muted mb-4">
+                                Comprehensive sales analytics including revenue trends, top performers, and ticket sales data across all events and organizers.
+                            </p>
+                            <div class="d-grid gap-2">
+                                <a asp-action="Sales" class="btn btn-primary btn-lg shadow-custom">
+                                    <i class="bi bi-bar-chart-fill"></i> View Sales Report
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> Real-time revenue and sales metrics
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Reports Card -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card shadow-custom rounded-custom h-100 hover-lift">
+                        <div class="card-body text-center">
+                            <div class="report-icon mb-3">
+                                <i class="bi bi-people-fill text-info" style="font-size: 3rem;"></i>
+                            </div>
+                            <h4 class="card-title text-primary mb-3">Users Reports</h4>
+                            <p class="card-text text-muted mb-4">
+                                User analytics including registration trends, role distribution, top customers, and organizer performance metrics.
+                            </p>
+                            <div class="d-grid gap-2">
+                                <a asp-action="Users" class="btn btn-info btn-lg shadow-custom">
+                                    <i class="bi bi-person-lines-fill"></i> View Users Report
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> User engagement and activity analysis
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Events Reports Card -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card shadow-custom rounded-custom h-100 hover-lift">
+                        <div class="card-body text-center">
+                            <div class="report-icon mb-3">
+                                <i class="bi bi-calendar-event-fill text-warning" style="font-size: 3rem;"></i>
+                            </div>
+                            <h4 class="card-title text-primary mb-3">Events Reports</h4>
+                            <p class="card-text text-muted mb-4">
+                                Event performance analytics including sell-through rates, category analysis, and venue utilization across the platform.
+                            </p>
+                            <div class="d-grid gap-2">
+                                <a asp-action="Events" class="btn btn-warning btn-lg shadow-custom text-dark">
+                                    <i class="bi bi-calendar-check-fill"></i> View Events Report
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> Event performance and capacity metrics
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats Overview -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="card shadow-custom rounded-custom">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-speedometer2"></i> Quick Overview
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-4">
+                                Get instant insights into your platform's performance with these comprehensive reporting tools.
+                                Each report includes interactive charts, detailed breakdowns, and CSV export functionality.
+                            </p>
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <div class="feature-highlight">
+                                        <i class="bi bi-graph-up text-success mb-2" style="font-size: 2rem;"></i>
+                                        <h6 class="text-primary">Revenue Analytics</h6>
+                                        <p class="small text-muted">Track total revenue, average ticket prices, and sales trends</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="feature-highlight">
+                                        <i class="bi bi-people text-info mb-2" style="font-size: 2rem;"></i>
+                                        <h6 class="text-primary">User Insights</h6>
+                                        <p class="small text-muted">Monitor user growth, activity, and engagement patterns</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="feature-highlight">
+                                        <i class="bi bi-calendar-week text-warning mb-2" style="font-size: 2rem;"></i>
+                                        <h6 class="text-primary">Event Performance</h6>
+                                        <p class="small text-muted">Analyze event success rates and capacity utilization</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-lift {
+    transition: transform 0.2s ease-in-out;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+}
+
+.feature-highlight {
+    padding: 1rem;
+    border-radius: 10px;
+    background: rgba(var(--bs-primary-rgb), 0.05);
+    margin-bottom: 1rem;
+}
+
+.report-icon {
+    background: rgba(var(--bs-primary-rgb), 0.1);
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s;
+}
+
+@@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.shadow-custom {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.gradient-text {
+    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.rounded-custom {
+    border-radius: 15px !important;
+}
+</style>

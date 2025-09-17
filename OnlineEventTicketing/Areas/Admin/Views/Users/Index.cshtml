@@ -1,0 +1,269 @@
+@model IEnumerable<OnlineEventTicketing.Models.ViewModels.UserDisplayViewModel>
+@{
+    ViewData["Title"] = "User Management";
+    var stats = ViewBag.UserStats as OnlineEventTicketing.Models.ViewModels.UserStatsViewModel;
+}
+
+<div class="container-fluid fade-in">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="dashboard-title mb-1">
+                        User Management
+                    </h1>
+                    <p class="dashboard-subtitle mb-0">Manage system users and roles</p>
+                </div>
+                <a asp-action="Create" class="btn btn-primary-custom btn-lg">
+                    <i class="bi bi-person-plus me-2"></i> Create User
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Statistics -->
+    @if (stats != null)
+    {
+        <div class="row mb-4 slide-up">
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="card stat-card stat-card-primary">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-primary mb-3">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <h3 class="stat-number text-primary-custom">@stats.TotalUsers</h3>
+                        <p class="stat-label mb-0">Total Users</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="card stat-card stat-card-success">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-success mb-3">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h3 class="stat-number text-success-custom">@stats.ActiveUsers</h3>
+                        <p class="stat-label mb-0">Active Users</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="card stat-card stat-card-warning">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-warning mb-3">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </div>
+                        <h3 class="stat-number text-warning-custom">@stats.InactiveUsers</h3>
+                        <p class="stat-label mb-0">Inactive Users</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="card stat-card stat-card-info">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-info mb-3">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <h3 class="stat-number text-info-custom">@stats.TotalCustomers</h3>
+                        <p class="stat-label mb-0">Customers</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="card stat-card stat-card-users">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-users mb-3">
+                            <i class="bi bi-briefcase"></i>
+                        </div>
+                        <h3 class="stat-number text-users-custom">@stats.TotalOrganizers</h3>
+                        <p class="stat-label mb-0">Organizers</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="card stat-card stat-card-pending">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-pending mb-3">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h3 class="stat-number text-pending-custom">@stats.TotalAdmins</h3>
+                        <p class="stat-label mb-0">Admins</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Users Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card users-table-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">
+                        All Users
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-professional">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Roles</th>
+                                        <th>Status</th>
+                                        <th>Registration</th>
+                                        <th>Tickets</th>
+                                        <th>Spent</th>
+                                        <th>Loyalty Points</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-initial rounded-circle bg-primary text-white me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                        @user.FirstName.FirstOrDefault()@user.LastName.FirstOrDefault()
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold">@user.FullName</div>
+                                                        <small class="text-muted">ID: @user.Id.Substring(0, 8)...</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div>@user.Email</div>
+                                                @if (user.EmailConfirmed)
+                                                {
+                                                    <small class="text-success"><i class="bi bi-check-circle-fill"></i> Verified</small>
+                                                }
+                                                else
+                                                {
+                                                    <small class="text-warning"><i class="bi bi-exclamation-triangle-fill"></i> Unverified</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                @foreach (var role in user.Roles)
+                                                {
+                                                    <span class="badge @user.PrimaryRoleBadgeClass me-1">@role</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge @user.StatusBadgeClass">@user.StatusDisplayName</span>
+                                            </td>
+                                            <td>
+                                                <div>@user.FormattedRegistrationDate</div>
+                                                <small class="text-muted">@((DateTime.Now - user.RegistrationDate).Days) days ago</small>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-info">@user.TotalTicketsPurchased</span>
+                                            </td>
+                                            <td>
+                                                <span class="text-success fw-bold">@user.FormattedTotalAmountSpent</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-warning text-dark">@user.LoyaltyPoints pts</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-sm btn-outline-primary" title="View Details">
+                                                        <i class="bi bi-eye-fill"></i>
+                                                    </a>
+                                                    <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-sm btn-outline-secondary" title="Edit User">
+                                                        <i class="bi bi-pencil-fill"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm @(user.IsActive ? "btn-outline-warning" : "btn-outline-success")" 
+                                                            data-bs-toggle="modal" data-bs-target="#statusModal-@user.Id" 
+                                                            title="@(user.IsActive ? "Deactivate" : "Activate") User">
+                                                        <i class="bi bi-@(user.IsActive ? "lock-fill" : "unlock-fill")"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            data-bs-toggle="modal" data-bs-target="#deleteModal-@user.Id" title="Delete User">
+                                                        <i class="bi bi-trash-fill"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Status Toggle Modal -->
+                                        <div class="modal fade" id="statusModal-@user.Id" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">@(user.IsActive ? "Deactivate" : "Activate") User</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Are you sure you want to @(user.IsActive ? "deactivate" : "activate") <strong>@user.FullName</strong>?</p>
+                                                        @if (user.IsActive)
+                                                        {
+                                                            <p class="text-warning">This will prevent the user from logging in.</p>
+                                                        }
+                                                        else
+                                                        {
+                                                            <p class="text-success">This will allow the user to log in again.</p>
+                                                        }
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <form asp-action="ToggleStatus" asp-route-id="@user.Id" method="post" style="display: inline;">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="btn @(user.IsActive ? "btn-warning" : "btn-success")">
+                                                                @(user.IsActive ? "Deactivate" : "Activate")
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Delete Modal -->
+                                        <div class="modal fade" id="deleteModal-@user.Id" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Delete User</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Are you sure you want to permanently delete <strong>@user.FullName</strong>?</p>
+                                                        <p class="text-danger">This action cannot be undone. All user data will be lost.</p>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <form asp-action="Delete" asp-route-id="@user.Id" method="post" style="display: inline;">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="btn btn-danger">Delete User</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-people text-muted" style="font-size: 4rem;"></i>
+                            <h4 class="text-muted mt-3">No users found</h4>
+                            <p class="text-muted">Start by creating your first user.</p>
+                            <a asp-action="Create" class="btn btn-primary-custom">
+                                <i class="bi bi-person-plus me-2"></i> Create User
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,212 @@
+@model OnlineEventTicketing.Models.ViewModels.CreatePromotionViewModel
+@{
+    ViewData["Title"] = "Create Promotion";
+}
+
+<div class="container fade-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="dashboard-title mb-1">Create New Promotion</h1>
+                            <p class="dashboard-subtitle mb-0">Create a promotional code to offer discounts to your event attendees</p>
+                        </div>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Promotions
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Form -->
+            <div class="card form-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">Promotion Details</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary-custom mb-3">
+                                    <i class="bi bi-info-circle-fill me-2"></i>Basic Information
+                                </h6>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Code" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-tag-fill"></i></span>
+                                    <input asp-for="Code" class="form-control text-uppercase font-monospace" 
+                                           placeholder="e.g., SAVE20, EARLYBIRD" style="text-transform: uppercase;" />
+                                </div>
+                                <span asp-validation-for="Code" class="text-danger"></span>
+                                <div class="form-text">Use uppercase letters and numbers only. This will be the code customers enter.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DiscountPercentage" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-percent"></i></span>
+                                    <input asp-for="DiscountPercentage" class="form-control" type="number" 
+                                           min="0.01" max="100" step="0.01" placeholder="e.g., 20" />
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <span asp-validation-for="DiscountPercentage" class="text-danger"></span>
+                                <div class="form-text">Percentage discount to apply to ticket prices.</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label asp-for="Description" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-text-paragraph"></i></span>
+                                    <textarea asp-for="Description" class="form-control" rows="3" 
+                                              placeholder="Optional description of this promotion..."></textarea>
+                                </div>
+                                <span asp-validation-for="Description" class="text-danger"></span>
+                                <div class="form-text">Optional description to help you remember what this promotion is for.</div>
+                            </div>
+                        </div>
+
+                        <!-- Event Selection -->
+                        <div class="row mb-4 mt-4">
+                            <div class="col-12">
+                                <h6 class="text-primary-custom mb-3">
+                                    <i class="bi bi-calendar-event-fill me-2"></i>Event Selection
+                                </h6>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label asp-for="EventId" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-calendar-event-fill"></i></span>
+                                    <select asp-for="EventId" class="form-select">
+                                        <option value="">Select an event</option>
+                                        @foreach (var eventItem in Model.AvailableEvents)
+                                        {
+                                            <option value="@eventItem.Id">
+                                                @eventItem.Title - @eventItem.Date.ToString("MMM dd, yyyy") (@eventItem.Location)
+                                            </option>
+                                        }
+                                    </select>
+                                </div>
+                                <span asp-validation-for="EventId" class="text-danger"></span>
+                                @if (!Model.AvailableEvents.Any())
+                                {
+                                    <div class="form-text text-warning">
+                                        <i class="bi bi-exclamation-triangle-fill"></i> 
+                                        You don't have any active upcoming events. Create an event first to add promotions.
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="form-text">Select which event this promotion applies to.</div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="row mb-4 mt-4">
+                            <div class="col-12">
+                                <h6 class="text-primary-custom mb-3">
+                                    <i class="bi bi-calendar-range-fill me-2"></i>Validity Period
+                                </h6>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="StartDate" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-calendar-plus-fill"></i></span>
+                                    <input asp-for="StartDate" class="form-control" type="datetime-local" />
+                                </div>
+                                <span asp-validation-for="StartDate" class="text-danger"></span>
+                                <div class="form-text">When the promotion becomes active.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="EndDate" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-calendar-x-fill"></i></span>
+                                    <input asp-for="EndDate" class="form-control" type="datetime-local" />
+                                </div>
+                                <span asp-validation-for="EndDate" class="text-danger"></span>
+                                <div class="form-text">When the promotion expires.</div>
+                            </div>
+                        </div>
+
+                        <!-- Settings -->
+                        <div class="row mb-4 mt-4">
+                            <div class="col-12">
+                                <h6 class="text-primary-custom mb-3">
+                                    <i class="bi bi-gear-fill me-2"></i>Settings
+                                </h6>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <div class="form-check form-switch">
+                                    <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch" />
+                                    <label asp-for="IsActive" class="form-check-label">
+                                        Active
+                                    </label>
+                                </div>
+                                <div class="form-text">Uncheck to create the promotion in disabled state.</div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                                        <i class="bi bi-x-circle me-2"></i>Cancel
+                                    </a>
+                                    @if (Model.AvailableEvents.Any())
+                                    {
+                                        <button type="submit" class="btn btn-success-custom btn-lg">
+                                            <i class="bi bi-plus-circle-fill me-2"></i>Create Promotion
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <a asp-area="" asp-controller="Events" asp-action="Create" class="btn btn-primary-custom btn-lg">
+                                            <i class="bi bi-calendar-plus-fill me-2"></i>Create Event First
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        // Auto-uppercase the promotion code
+        document.getElementById('Code').addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    </script>
+}
+
+<style>
+.font-monospace {
+    font-family: 'Courier New', Courier, monospace !important;
+}
+</style>

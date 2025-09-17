@@ -1,0 +1,288 @@
+@using OnlineEventTicketing.Data.Entity
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container-fluid fade-in">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="dashboard-title mb-1">
+                        Admin Dashboard
+                    </h1>
+                    <p class="dashboard-subtitle mb-0">System-wide overview and management</p>
+                </div>
+                <a asp-area="Admin" asp-controller="Events" asp-action="Index" class="btn btn-primary-custom btn-lg">
+                    <i class="bi bi-calendar-event me-2"></i> Manage Events
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Statistics -->
+    <div class="row mb-4 slide-up">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stat-card stat-card-primary">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-primary mb-3">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                    <h3 class="stat-number text-primary-custom">@ViewBag.TotalEvents</h3>
+                    <p class="stat-label mb-0">Total Events</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stat-card stat-card-success">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-success mb-3">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <h3 class="stat-number text-success-custom">@ViewBag.ActiveEvents</h3>
+                    <p class="stat-label mb-0">Active Events</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stat-card stat-card-info">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-info mb-3">
+                        <i class="bi bi-ticket-perforated"></i>
+                    </div>
+                    <h3 class="stat-number text-info-custom">@ViewBag.TotalTicketsSold</h3>
+                    <p class="stat-label mb-0">Tickets Sold</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stat-card stat-card-warning">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-warning mb-3">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <h3 class="stat-number text-warning-custom">@(ViewBag.TotalRevenue?.ToString("C") ?? "$0")</h3>
+                    <p class="stat-label mb-0">Total Revenue</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stat-card stat-card-users">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-users mb-3">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <h3 class="stat-number text-users-custom">@ViewBag.TotalUsers</h3>
+                    <p class="stat-label mb-0">Total Users</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stat-card stat-card-pending">
+                <div class="card-body text-center">
+                    <div class="stat-icon stat-icon-pending mb-3">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                    <h3 class="stat-number text-pending-custom">@ViewBag.PendingPayments</h3>
+                    <p class="stat-label mb-0">Pending Payments</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card admin-actions-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="row g-3">
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <a asp-area="Admin" asp-controller="Events" asp-action="Index" class="action-card action-card-events">
+                                <div class="action-icon">
+                                    <i class="bi bi-calendar-event"></i>
+                                </div>
+                                <span class="action-label">Events</span>
+                                <small class="action-subtitle">Manage all events</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="action-card action-card-users">
+                                <div class="action-icon">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                                <span class="action-label">Users</span>
+                                <small class="action-subtitle">User management</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <a asp-area="Admin" asp-controller="Reports" asp-action="Index" class="action-card action-card-reports">
+                                <div class="action-icon">
+                                    <i class="bi bi-bar-chart-line"></i>
+                                </div>
+                                <span class="action-label">Reports</span>
+                                <small class="action-subtitle">Analytics & insights</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <a href="#" class="action-card action-card-payments">
+                                <div class="action-icon">
+                                    <i class="bi bi-credit-card-2-front"></i>
+                                </div>
+                                <span class="action-label">Payments</span>
+                                <small class="action-subtitle">Transaction history</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <a href="#" class="action-card action-card-promotions">
+                                <div class="action-icon">
+                                    <i class="bi bi-tags"></i>
+                                </div>
+                                <span class="action-label">Promotions</span>
+                                <small class="action-subtitle">Marketing campaigns</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <a href="#" class="action-card action-card-settings">
+                                <div class="action-icon">
+                                    <i class="bi bi-gear-wide-connected"></i>
+                                </div>
+                                <span class="action-label">Settings</span>
+                                <small class="action-subtitle">System configuration</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Overview -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card activity-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">Recent Events</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    @if (ViewBag.RecentEvents != null)
+                    {
+                        <div class="list-group">
+                            @foreach (var eventItem in ViewBag.RecentEvents)
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">@eventItem.Title</h6>
+                                        <small class="text-muted">By @eventItem.OrganizerName • @eventItem.FormattedDate</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge @(eventItem.IsActive ? "bg-success" : "bg-secondary")">
+                                            @(eventItem.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No recent events.</p>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card activity-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">Recent Tickets</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    @if (ViewBag.RecentTickets != null)
+                    {
+                        <div class="list-group">
+                            @foreach (var ticket in ViewBag.RecentTickets)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Ticket #@ticket.Id</h6>
+                                        <small class="text-muted">@ticket.PurchaseDate.ToString("MMM dd")</small>
+                                    </div>
+                                    <p class="mb-1">@ticket.Event.Title</p>
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">@ticket.Customer.FirstName @ticket.Customer.LastName</small>
+                                        <span class="badge @(ticket.Status == TicketStatus.Active ? "bg-success" : "bg-secondary")">
+                                            @ticket.Status
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No recent tickets.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Section -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card analytics-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">Event Categories</h5>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.TopCategories != null)
+                    {
+                        @foreach (var category in ViewBag.TopCategories)
+                        {
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <span>@category.Category</span>
+                                    <span class="badge bg-primary">@category.Count</span>
+                                </div>
+                                <div class="progress" style="height: 5px;">
+                                    <div class="progress-bar" style="width: @(category.Count * 100 / ViewBag.TotalEvents)%"></div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card analytics-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">Monthly Revenue Trend</h5>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.MonthlyRevenue != null)
+                    {
+                        @foreach (var month in ViewBag.MonthlyRevenue)
+                        {
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <span>@month.Month</span>
+                                    <span class="text-success">@month.Revenue.ToString("C")</span>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">No revenue data available.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

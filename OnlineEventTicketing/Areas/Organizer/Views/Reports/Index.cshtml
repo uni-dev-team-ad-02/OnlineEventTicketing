@@ -1,0 +1,158 @@
+@{
+    ViewData["Title"] = "Reports Dashboard";
+    var eventSales = ViewBag.EventSales as IEnumerable<OnlineEventTicketing.Models.ViewModels.EventSalesReportViewModel> ?? new List<OnlineEventTicketing.Models.ViewModels.EventSalesReportViewModel>();
+    var recentRevenue = ViewBag.RecentRevenue as OnlineEventTicketing.Models.ViewModels.OrganizerRevenueReportViewModel;
+}
+
+<div class="container-fluid fade-in">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="dashboard-title mb-1">Reports Dashboard</h1>
+                    <p class="dashboard-subtitle mb-0">Analyze your event performance, revenue, and sales data</p>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-primary-custom btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-download me-2"></i>Export Reports
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="javascript:void(0);" onclick="exportRevenue()">
+                            <i class="bi bi-currency-dollar"></i> Revenue Report (CSV)
+                        </a></li>
+                        <li><a class="dropdown-item" href="javascript:void(0);" onclick="exportSales()">
+                            <i class="bi bi-graph-up"></i> Sales Report (CSV)
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats (Last 30 Days) -->
+    @if (recentRevenue != null)
+    {
+        <div class="row mb-4 slide-up">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-success mb-3">
+                            <i class="bi bi-currency-dollar"></i>
+                        </div>
+                        <h3 class="stat-number text-success-custom">@recentRevenue.FormattedTotalRevenue</h3>
+                        <p class="stat-label mb-0">Revenue (Last 30 Days)</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-primary mb-3">
+                            <i class="bi bi-ticket-perforated-fill"></i>
+                        </div>
+                        <h3 class="stat-number text-primary-custom">@recentRevenue.TotalTicketsSold</h3>
+                        <p class="stat-label mb-0">Tickets Sold</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-info mb-3">
+                            <i class="bi bi-calendar-event-fill"></i>
+                        </div>
+                        <h3 class="stat-number text-info-custom">@recentRevenue.TotalEvents</h3>
+                        <p class="stat-label mb-0">Total Events</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-icon stat-icon-warning mb-3">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <h3 class="stat-number text-warning-custom">@recentRevenue.FormattedAverageTicketPrice</h3>
+                        <p class="stat-label mb-0">Avg. Ticket Price</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Report Categories -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card admin-actions-card">
+                <div class="card-header border-0 bg-transparent">
+                    <h5 class="section-title mb-0">Available Reports</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-4 col-md-6 col-sm-8 mb-3">
+                            <a asp-action="Revenue" class="btn btn-success-custom btn-lg w-100 report-card">
+                                <i class="bi bi-currency-dollar d-block mb-2" style="font-size: 3rem;"></i>
+                                <div class="fw-bold fs-5">Revenue Report</div>
+                                <small>Financial performance and revenue analysis</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-4 col-md-6 col-sm-8 mb-3">
+                            <a asp-action="Sales" class="btn btn-primary-custom btn-lg w-100 report-card">
+                                <i class="bi bi-graph-up d-block mb-2" style="font-size: 3rem;"></i>
+                                <div class="fw-bold fs-5">Sales Report</div>
+                                <small>Ticket sales analysis and trends</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Export Forms (Hidden) -->
+<form id="exportRevenueForm" asp-action="ExportRevenue" method="post" style="display: none;">
+    <input type="hidden" name="startDate" value="@DateTime.Now.AddMonths(-12):yyyy-MM-dd" />
+    <input type="hidden" name="endDate" value="@DateTime.Now:yyyy-MM-dd" />
+    <input type="hidden" name="format" value="csv" />
+</form>
+
+<form id="exportSalesForm" asp-action="ExportSales" method="post" style="display: none;">
+    <input type="hidden" name="startDate" value="@DateTime.Now.AddMonths(-3):yyyy-MM-dd" />
+    <input type="hidden" name="endDate" value="@DateTime.Now:yyyy-MM-dd" />
+    <input type="hidden" name="format" value="csv" />
+</form>
+
+@section Scripts {
+    <script>
+        function exportRevenue() {
+            document.getElementById('exportRevenueForm').submit();
+        }
+
+        function exportSales() {
+            document.getElementById('exportSalesForm').submit();
+        }
+    </script>
+}
+
+<style>
+.report-card {
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.report-card:hover:not(:disabled) {
+    transform: translateY(-3px);
+}
+
+.report-card:disabled {
+    opacity: 0.6;
+}
+</style>
