@@ -87,7 +87,50 @@ dotnet test OnlineEventTicketing.sln
 2. Make changes and commit
 3. Push and create pull request
 
+## Email Configuration
+
+The application includes email functionality for sending ticket purchase confirmations. To configure email settings:
+
+### 1. Add Email Configuration
+Add the following to your `appsettings.json` or `appsettings.Development.json`:
+
+```json
+{
+  "Email": {
+    "SmtpHost": "smtp.gmail.com",
+    "SmtpPort": 587,
+    "FromEmail": "your-email@gmail.com",
+    "FromName": "Online Event Ticketing",
+    "Username": "your-email@gmail.com",
+    "Password": "your-app-password",
+    "EnableSsl": true
+  }
+}
+```
+
+### 2. Gmail Setup
+For Gmail, you'll need to:
+1. Enable 2-factor authentication on your Google account
+2. Generate an App Password:
+   - Go to Google Account settings
+   - Security → 2-Step Verification → App passwords
+   - Generate a password for "Mail"
+   - Use this app password in the configuration
+
+### 3. Other Email Providers
+For other email providers, update the SMTP settings accordingly:
+- **Outlook/Hotmail**: `smtp-mail.outlook.com`, port 587
+- **Yahoo**: `smtp.mail.yahoo.com`, port 587
+- **Custom SMTP**: Use your provider's SMTP settings
+
+### 4. Email Features
+- Automatic email confirmation when tickets are purchased
+- Professional HTML email template with event and ticket details
+- QR code included in email for easy access
+- Error logging for failed email sends
+
 ## Configuration Notes
 - `appsettings.Development.json` is gitignored for security
 - Production uses Azure App Settings
 - Connection string format: `Server=host;Database=db;Uid=user;Pwd=pass;`
+- Keep email credentials secure and never commit them to version control

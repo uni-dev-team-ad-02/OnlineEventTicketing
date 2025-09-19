@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using OnlineEventTicketing.Business;
 using OnlineEventTicketing.Data.Entity;
 using OnlineEventTicketing.Models.ViewModels;
+using OnlineEventTicketing.Helpers;
 
 namespace OnlineEventTicketing.Controllers
 {
@@ -16,6 +17,7 @@ namespace OnlineEventTicketing.Controllers
         private readonly IStripeService _stripeService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<TicketsController> _logger;
 
         public TicketsController(
             ITicketService ticketService,
@@ -23,7 +25,8 @@ namespace OnlineEventTicketing.Controllers
             IPaymentService paymentService,
             IStripeService stripeService,
             UserManager<ApplicationUser> userManager,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ILogger<TicketsController> logger)
         {
             _ticketService = ticketService;
             _eventService = eventService;
@@ -31,6 +34,7 @@ namespace OnlineEventTicketing.Controllers
             _stripeService = stripeService;
             _userManager = userManager;
             _configuration = configuration;
+            _logger = logger;
         }
 
         // GET: Tickets
@@ -144,6 +148,17 @@ namespace OnlineEventTicketing.Controllers
             var finalPrice = await _eventService.CalculateTicketPriceAsync(model.EventId, model.PromotionCode);
             var totalAmount = finalPrice * model.TicketQuantity;
 
+            // Send initial purchase confirmation email
+            try
+            {
+                await EmailHelper.SendPurchaseInitiatedEmailAsync(
+                    user, eventItem, model.TicketQuantity, totalAmount, _configuration, _logger);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send purchase initiated email to user {UserId}", user.Id);
+            }
+
             // Create tickets and payment records FIRST
             var purchasedTickets = new List<Ticket>();
             var paymentIds = new List<int>();
@@ -208,8 +223,8 @@ namespace OnlineEventTicketing.Controllers
             }
 
             // Tickets and payments were already created before checkout
-            // Just confirm successful redirect from Stripe
-            TempData["Success"] = $"Payment completed successfully! You have purchased {quantity} ticket(s).";
+            // The actual ticket emails with QR codes will be sent via Stripe webhook
+            TempData["Success"] = $"Payment completed successfully! You have purchased {quantity} ticket(s). Your tickets with QR codes will be sent to your email shortly.";
 
             return RedirectToAction(nameof(Index));
         }

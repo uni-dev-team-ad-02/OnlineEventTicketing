@@ -30,6 +30,23 @@
                             <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
                                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
+                                <div class="row mb-4">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="Input.FirstName" class="form-label fw-bold">
+                                            <i class="bi bi-person me-2 text-primary"></i>First Name
+                                        </label>
+                                        <input asp-for="Input.FirstName" class="form-control form-control-lg" aria-required="true" placeholder="Enter your first name" />
+                                        <span asp-validation-for="Input.FirstName" class="text-danger mt-1 d-block"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="Input.LastName" class="form-label fw-bold">
+                                            <i class="bi bi-person me-2 text-primary"></i>Last Name
+                                        </label>
+                                        <input asp-for="Input.LastName" class="form-control form-control-lg" aria-required="true" placeholder="Enter your last name" />
+                                        <span asp-validation-for="Input.LastName" class="text-danger mt-1 d-block"></span>
+                                    </div>
+                                </div>
+
                                 <div class="mb-4">
                                     <label asp-for="Input.Email" class="form-label fw-bold">
                                         <i class="bi bi-envelope me-2 text-primary"></i>Email Address
@@ -52,6 +69,16 @@
                                     </label>
                                     <input asp-for="Input.ConfirmPassword" class="form-control form-control-lg" autocomplete="new-password" aria-required="true" placeholder="Confirm your password" />
                                     <span asp-validation-for="Input.ConfirmPassword" class="text-danger mt-1 d-block"></span>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label asp-for="Input.SelectedRole" class="form-label fw-bold">
+                                        <i class="bi bi-person-badge me-2 text-primary"></i>Account Type
+                                    </label>
+                                    <select asp-for="Input.SelectedRole" asp-items="Model.AvailableRoles" class="form-select form-select-lg">
+                                        <option value="">Choose your account type</option>
+                                    </select>
+                                    <span asp-validation-for="Input.SelectedRole" class="text-danger mt-1 d-block"></span>
                                 </div>
 
                                 <button id="registerSubmit" type="submit" class="btn btn-primary-custom btn-lg w-100 mb-3">

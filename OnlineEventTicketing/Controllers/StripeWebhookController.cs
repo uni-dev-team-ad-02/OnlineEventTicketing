@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using OnlineEventTicketing.Business;
+using OnlineEventTicketing.Data.Entity;
+using OnlineEventTicketing.Helpers;
 using Stripe;
 
 namespace OnlineEventTicketing.Controllers
@@ -13,6 +16,8 @@ namespace OnlineEventTicketing.Controllers
         private readonly IStripeService _stripeService;
         private readonly IPaymentService _paymentService;
         private readonly ITicketService _ticketService;
+        private readonly IEventService _eventService;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
         private readonly ILogger<StripeWebhookController> _logger;
 
@@ -20,12 +25,16 @@ namespace OnlineEventTicketing.Controllers
             IStripeService stripeService,
             IPaymentService paymentService,
             ITicketService ticketService,
+            IEventService eventService,
+            UserManager<ApplicationUser> userManager,
             IConfiguration configuration,
             ILogger<StripeWebhookController> logger)
         {
             _stripeService = stripeService;
             _paymentService = paymentService;
             _ticketService = ticketService;
+            _eventService = eventService;
+            _userManager = userManager;
             _configuration = configuration;
             _logger = logger;
         }
@@ -139,6 +148,8 @@ namespace OnlineEventTicketing.Controllers
                     paymentIds.Count, string.Join(", ", paymentIds));
 
                 var updatedCount = 0;
+                var successfulTickets = new List<(OnlineEventTicketing.Data.Entity.Ticket ticket, ApplicationUser user, OnlineEventTicketing.Data.Entity.Event eventItem)>();
+
                 foreach (var paymentId in paymentIds)
                 {
                     var payment = await _paymentService.GetPaymentByIdAsync(paymentId);
@@ -150,6 +161,26 @@ namespace OnlineEventTicketing.Controllers
 
                         _logger.LogInformation("Payment {PaymentId} marked as completed", payment.Id);
                         updatedCount++;
+
+                        // Get ticket details for email sending
+                        try
+                        {
+                            var ticket = await _ticketService.GetTicketByIdAsync(payment.TicketId);
+                            if (ticket != null)
+                            {
+                                var user = await _userManager.FindByIdAsync(ticket.CustomerId);
+                                var eventItem = await _eventService.GetEventByIdAsync(ticket.EventId);
+
+                                if (user != null && eventItem != null)
+                                {
+                                    successfulTickets.Add((ticket, user, eventItem));
+                                }
+                            }
+                        }
+                        catch (Exception emailEx)
+                        {
+                            _logger.LogError(emailEx, "Error preparing ticket email data for payment {PaymentId}", payment.Id);
+                        }
                     }
                     else
                     {
@@ -157,8 +188,25 @@ namespace OnlineEventTicketing.Controllers
                     }
                 }
 
-                _logger.LogInformation("Successfully updated {UpdatedCount} out of {TotalCount} payments for session: {SessionId}",
-                    updatedCount, paymentIds.Count, session.Id);
+                // Send ticket confirmation emails
+                foreach (var (ticket, user, eventItem) in successfulTickets)
+                {
+                    try
+                    {
+                        await EmailHelper.SendTicketConfirmationEmailAsync(
+                            user, ticket, eventItem, _configuration, _logger);
+                        _logger.LogInformation("Ticket confirmation email sent for ticket {TicketId} to user {UserId}",
+                            ticket.Id, user.Id);
+                    }
+                    catch (Exception emailEx)
+                    {
+                        _logger.LogError(emailEx, "Failed to send ticket confirmation email for ticket {TicketId} to user {UserId}",
+                            ticket.Id, user.Id);
+                    }
+                }
+
+                _logger.LogInformation("Successfully updated {UpdatedCount} out of {TotalCount} payments and sent {EmailCount} ticket emails for session: {SessionId}",
+                    updatedCount, paymentIds.Count, successfulTickets.Count, session.Id);
             }
             catch (Exception e)
             {
