@@ -97,54 +97,54 @@ namespace OnlineEventTicketing.Helpers
         private static string GeneratePurchaseInitiatedEmailBody(ApplicationUser user, Event eventItem, int ticketQuantity, decimal totalAmount)
         {
             return $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .header {{ background-color: #007bff; color: white; padding: 20px; text-align: center; }}
-        .content {{ padding: 20px; background-color: #f8f9fa; }}
-        .purchase-details {{ background-color: white; padding: 15px; border-radius: 5px; margin: 15px 0; }}
-        .footer {{ background-color: #6c757d; color: white; padding: 15px; text-align: center; }}
-        .processing {{ background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 15px 0; }}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        <div class='header'>
-            <h1>Payment Processing</h1>
-        </div>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background-color: #007bff; color: white; padding: 20px; text-align: center; }}
+                    .content {{ padding: 20px; background-color: #f8f9fa; }}
+                    .purchase-details {{ background-color: white; padding: 15px; border-radius: 5px; margin: 15px 0; }}
+                    .footer {{ background-color: #6c757d; color: white; padding: 15px; text-align: center; }}
+                    .processing {{ background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 15px 0; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h1>Payment Processing</h1>
+                    </div>
 
-        <div class='content'>
-            <p>Dear {user.FirstName} {user.LastName},</p>
+                    <div class='content'>
+                        <p>Dear {user.FirstName} {user.LastName},</p>
 
-            <p>Thank you for your ticket purchase! We are currently processing your payment.</p>
+                        <p>Thank you for your ticket purchase! We are currently processing your payment.</p>
 
-            <div class='purchase-details'>
-                <h3>Purchase Details</h3>
-                <p><strong>Event:</strong> {eventItem.Title}</p>
-                <p><strong>Date:</strong> {eventItem.Date:MMM dd, yyyy 'at' h:mm tt}</p>
-                <p><strong>Location:</strong> {eventItem.Location}</p>
-                <p><strong>Tickets:</strong> {ticketQuantity}</p>
-                <p><strong>Total Amount:</strong> {totalAmount:C}</p>
-            </div>
+                        <div class='purchase-details'>
+                            <h3>Purchase Details</h3>
+                            <p><strong>Event:</strong> {eventItem.Title}</p>
+                            <p><strong>Date:</strong> {eventItem.Date:MMM dd, yyyy 'at' h:mm tt}</p>
+                            <p><strong>Location:</strong> {eventItem.Location}</p>
+                            <p><strong>Tickets:</strong> {ticketQuantity}</p>
+                            <p><strong>Total Amount:</strong> {totalAmount:C}</p>
+                        </div>
 
-            <div class='processing'>
-                <h4>⏳ Payment Processing</h4>
-                <p>Your payment is being processed through our secure payment system. This usually takes a few moments.</p>
-                <p><strong>Once payment is confirmed, you will receive your ticket(s) with QR codes via email.</strong></p>
-            </div>
+                        <div class='processing'>
+                            <h4>⏳ Payment Processing</h4>
+                            <p>Your payment is being processed through our secure payment system. This usually takes a few moments.</p>
+                            <p><strong>Once payment is confirmed, you will receive your ticket(s) with QR codes via email.</strong></p>
+                        </div>
 
-            <p>You can track your order status by logging into your account. If you have any questions, please don't hesitate to contact us.</p>
-        </div>
+                        <p>You can track your order status by logging into your account. If you have any questions, please don't hesitate to contact us.</p>
+                    </div>
 
-        <div class='footer'>
-            <p>&copy; 2024 Online Event Ticketing. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-</html>";
+                    <div class='footer'>
+                        <p>&copy; 2054 Online Event Ticketing. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>";
         }
 
         private static string GenerateTicketEmailBody(ApplicationUser user, Ticket ticket, Event eventItem)
@@ -284,7 +284,7 @@ namespace OnlineEventTicketing.Helpers
         </div>
 
         <div class='footer'>
-            <p>&copy; 2024 Online Event Ticketing. All rights reserved.</p>
+            <p>&copy; 2025 Online Event Ticketing. All rights reserved.</p>
         </div>
     </div>
 </body>
